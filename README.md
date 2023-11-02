@@ -1,22 +1,22 @@
 ### Practices
 
-## 0. Authenticate & Authorization
+#### 0. Authenticate & Authorization
 
-# 1. Email flow
+##### - Email flow
 
-# 2. External providers: google, facebook, twitter, linkedin
+##### - External providers: google, facebook, twitter, linkedin
 
-# 3. Example of how to use RBAC, CBAC & CASL
+##### - Example of how to use RBAC, CBAC & CASL
 
-## 1. Upload single file & multiple files
+#### 1. Upload single file & multiple files
 
-## 2. Upload big csv file & process import data into MongoDB
+#### 2. Upload big csv file & process import data into MongoDB
 
-## 3. Caching with REDIS
+#### 3. Caching with REDIS
 
-## 4. Socket chat example
+#### 4. Socket chat example
 
-## 5. Monitor with Email, Slack
+#### 5. Monitor with Email, Slack
 
 ### Development
 
