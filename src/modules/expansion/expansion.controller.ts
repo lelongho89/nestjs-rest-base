@@ -5,6 +5,7 @@
 
 import { Auth } from 'googleapis'
 import { Controller, Get, Post, Patch, UploadedFile, Body, UseGuards, UseInterceptors } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { AdminMaybeGuard } from '@app/guards/admin-maybe.guard'
@@ -16,6 +17,8 @@ import { StatisticService, Statistic } from './expansion.service.statistic'
 import { DBBackupService } from './expansion.service.dbbackup'
 import * as APP_CONFIG from '@app/app.config'
 
+@ApiBearerAuth()
+@ApiTags('Expansion')
 @Controller('expansion')
 export class ExpansionController {
   constructor(

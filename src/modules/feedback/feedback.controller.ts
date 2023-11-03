@@ -5,6 +5,7 @@
 
 import lodash from 'lodash'
 import { Controller, Get, Put, Post, Delete, Query, Body, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle, seconds } from '@nestjs/throttler'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { ExposePipe } from '@app/pipes/expose.pipe'
@@ -18,6 +19,8 @@ import { Feedback, FeedbackBase } from './feedback.model'
 import { FeedbackService } from './feedback.service'
 import * as APP_CONFIG from '@app/app.config'
 
+@ApiBearerAuth()
+@ApiTags('Feedbacks')
 @Controller('feedback')
 export class FeedbackController {
   constructor(

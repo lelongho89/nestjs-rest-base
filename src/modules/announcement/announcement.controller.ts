@@ -4,6 +4,7 @@
 */
 
 import lodash from 'lodash'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Put, Post, Delete, Body, UseGuards, Query } from '@nestjs/common'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { AdminMaybeGuard } from '@app/guards/admin-maybe.guard'
@@ -16,6 +17,8 @@ import { AnnouncementsDTO, AnnouncementPaginateQueryDTO } from './announcement.d
 import { AnnouncementService } from './announcement.service'
 import { Announcement } from './announcement.model'
 
+@ApiBearerAuth()
+@ApiTags('Announcement')
 @Controller('announcement')
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}

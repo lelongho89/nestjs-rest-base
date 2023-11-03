@@ -4,6 +4,7 @@
 */
 
 import { Controller, Get, Put, Post, Body, UseGuards, HttpStatus } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { IPService } from '@app/processors/helper/helper.service.ip'
 import { EmailService } from '@app/processors/helper/helper.service.email'
@@ -15,6 +16,8 @@ import { TokenResult } from './auth.interface'
 import { Auth } from './auth.model'
 import { APP } from '@app/app.config'
 
+@ApiBearerAuth()
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(

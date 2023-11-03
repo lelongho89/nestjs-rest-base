@@ -6,6 +6,7 @@
 import lodash from 'lodash'
 import { UAParser } from 'ua-parser-js'
 import { Controller, Get, Post, Delete, Body, Query, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle, minutes, seconds } from '@nestjs/throttler'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { ExposePipe } from '@app/pipes/expose.pipe'
@@ -28,6 +29,8 @@ import { Vote, VoteTarget, VoteAuthorType, voteTypeMap } from './vote.model'
 import { VoteService } from './vote.service'
 import * as APP_CONFIG from '@app/app.config'
 
+@ApiBearerAuth()
+@ApiTags('Votes')
 @Controller('vote')
 export class VoteController {
   constructor(

@@ -6,6 +6,7 @@
 import lodash from 'lodash'
 import { Types } from 'mongoose'
 import { Controller, Get, Put, Post, Patch, Delete, Query, Body, UseGuards, HttpStatus } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { QueryParams, QueryParamsResult } from '@app/decorators/queryparams.decorator'
 import { Responser } from '@app/decorators/responser.decorator'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
@@ -21,6 +22,8 @@ import { ARTICLE_HOTTEST_SORT_PARAMS } from './article.model'
 import { ArticleService } from './article.service'
 import { Article } from './article.model'
 
+@ApiBearerAuth()
+@ApiTags('Articles')
 @Controller('article')
 export class ArticleController {
   constructor(

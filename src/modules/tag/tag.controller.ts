@@ -5,6 +5,7 @@
 
 import lodash from 'lodash'
 import { Controller, Get, Put, Post, Delete, Query, Body, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { AdminMaybeGuard } from '@app/guards/admin-maybe.guard'
 import { PermissionPipe } from '@app/pipes/permission.pipe'
@@ -16,6 +17,8 @@ import { TagsDTO, TagPaginateQueryDTO } from './tag.dto'
 import { TagService } from './tag.service'
 import { Tag } from './tag.model'
 
+@ApiBearerAuth()
+@ApiTags('Tags')
 @Controller('tag')
 export class TagController {
   constructor(private readonly tagService: TagService) {}

@@ -5,6 +5,7 @@
 
 import lodash from 'lodash'
 import { Controller, Get, Put, Post, Patch, Delete, Query, Body, UseGuards, HttpStatus } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle, seconds } from '@nestjs/throttler'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { AdminMaybeGuard } from '@app/guards/admin-maybe.guard'
@@ -18,6 +19,8 @@ import { CommentPaginateQueryDTO, CommentCalendarQueryDTO, CommentsDTO, Comments
 import { CommentService } from './comment.service'
 import { Comment, CommentBase } from './comment.model'
 
+@ApiBearerAuth()
+@ApiTags('Comments')
 @Controller('comment')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}

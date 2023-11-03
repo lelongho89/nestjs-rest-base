@@ -17,7 +17,6 @@
     "test:cov": "cross-env NODE_ENV=test jest --coverage",
     "test:debug": "cross-env NODE_ENV=test node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
-    "doc": "compodoc -p tsconfig.json -n 'NodePress documentation' -d documentation --disableCoverage",
     "release": ". ./scripts/release.sh"
   },
   "dependencies": {
@@ -29,6 +28,7 @@
     "@nestjs/mapped-types": "^2.0.2",
     "@nestjs/passport": "^10.0.2",
     "@nestjs/platform-express": "^10.2.7",
+    "@nestjs/swagger": "^7.1.14",
     "@nestjs/throttler": "^5.0.0",
     "@typegoose/auto-increment": "^3.5.0",
     "@typegoose/typegoose": "^11.5.1",
@@ -49,7 +49,7 @@
     "js-base64": "^3.7.5",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
-    "mongoose": "~7.5.0",
+    "mongoose": "~7.6.1",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.5",
     "passport": "~0.6.0",

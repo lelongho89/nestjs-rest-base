@@ -4,6 +4,7 @@
 */
 
 import { Controller, UseGuards, Get, Put, Post, Delete, Query, Body } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { AdminMaybeGuard } from '@app/guards/admin-maybe.guard'
 import { PermissionPipe } from '@app/pipes/permission.pipe'
@@ -15,6 +16,8 @@ import { CategoriesDTO, CategoryPaginateQueryDTO } from './category.dto'
 import { CategoryService } from './category.service'
 import { Category } from './category.model'
 
+@ApiBearerAuth()
+@ApiTags('Categories')
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}

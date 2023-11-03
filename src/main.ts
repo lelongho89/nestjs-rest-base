@@ -9,6 +9,7 @@ import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import compression from 'compression'
 import { NestFactory } from '@nestjs/core'
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from '@app/app.module'
 import { HttpExceptionFilter } from '@app/filters/error.filter'
 import { TransformInterceptor } from '@app/interceptors/transform.interceptor'
@@ -36,9 +37,20 @@ async function bootstrap() {
   // https://stackoverflow.com/a/60141437/6222535
   // MARK: can't used!
   // useContainer(app.select(AppModule), { fallbackOnErrors: true, fallback: true })
+
+  const options = new DocumentBuilder()
+    .setTitle('API')
+    .setDescription('API docs')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup('docs', app, document);
+
   return await app.listen(APP_CONFIG.APP.PORT)
 }
 
 bootstrap().then(() => {
-  logger.info(`NodePress is running on ${APP_CONFIG.APP.PORT}, env: ${environment}.`)
+  logger.info(`${APP_CONFIG.APP.NAME} is running on ${APP_CONFIG.APP.PORT}, env: ${environment}.`)
 })

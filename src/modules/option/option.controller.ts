@@ -4,6 +4,7 @@
 */
 
 import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { QueryParams, QueryParamsResult } from '@app/decorators/queryparams.decorator'
 import { Responser } from '@app/decorators/responser.decorator'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
@@ -11,6 +12,8 @@ import { AdminMaybeGuard } from '@app/guards/admin-maybe.guard'
 import { OptionService } from './option.service'
 import { Option } from './option.model'
 
+@ApiBearerAuth()
+@ApiTags('Options')
 @Controller('option')
 export class OptionController {
   constructor(private readonly optionService: OptionService) {}

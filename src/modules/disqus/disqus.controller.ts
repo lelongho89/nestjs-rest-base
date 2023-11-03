@@ -16,6 +16,7 @@ import {
   Query,
   UseInterceptors
 } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express'
 import { Throttle, seconds } from '@nestjs/throttler'
 import { isProdEnv } from '@app/app.environment'
@@ -30,6 +31,8 @@ import { DisqusPrivateService } from './disqus.service.private'
 import { DisqusToken, TOKEN_COOKIE_KEY, encodeToken } from './disqus.token'
 import { CallbackCodeDTO, ThreadPostIdDTO, CommentIdDTO, GeneralDisqusParams } from './disqus.dto'
 
+@ApiBearerAuth()
+@ApiTags('Disqus')
 @Controller('disqus')
 export class DisqusController {
   constructor(

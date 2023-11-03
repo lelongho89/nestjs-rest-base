@@ -34,7 +34,7 @@ export const CROSS_DOMAIN = {
 }
 
 export const MONGO_DB = {
-  uri: argv.db_uri || `mongodb://127.0.0.1:27017/nest-base`
+  uri: argv.db_uri || `mongodb+srv://admin:qaz123@cluster0.ga1uuhf.mongodb.net/nest-base`
 }
 
 export const REDIS = {
