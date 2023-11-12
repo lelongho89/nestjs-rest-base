@@ -5,12 +5,28 @@
 
 import { APP_INTERCEPTOR, APP_GUARD, APP_PIPE } from '@nestjs/core'
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule, minutes } from '@nestjs/throttler'
+import { I18nModule } from 'nestjs-i18n/dist/i18n.module';
+import { HeaderResolver } from 'nestjs-i18n';
+import path from 'path';
 import { AppController } from '@app/app.controller'
 
 // framework
 import { CacheInterceptor } from '@app/interceptors/cache.interceptor'
 import { ValidationPipe } from '@app/pipes/validation.pipe'
+
+// config
+import databaseConfig from '@app/config/database.config';
+import authConfig from '@app/config/auth.config';
+import appConfig from '@app/config/app.config';
+import mailConfig from '@app/config/mail.config';
+import fileConfig from '@app/config/file.config';
+import facebookConfig from '@app/config/facebook.config';
+import googleConfig from '@app/config/google.config';
+import twitterConfig from '@app/config/twitter.config';
+import appleConfig from '@app/config/apple.config';
+import { AllConfigType } from '@app/config/config.type';
 
 // middlewares
 import { CorsMiddleware } from '@app/middlewares/cors.middleware'
@@ -39,6 +55,21 @@ import { VoteModule } from '@app/modules/vote/vote.module'
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [
+        databaseConfig,
+        authConfig,
+        appConfig,
+        mailConfig,
+        fileConfig,
+        facebookConfig,
+        googleConfig,
+        twitterConfig,
+        appleConfig,
+      ],
+      envFilePath: ['.env'],
+    }),
     // https://github.com/nestjs/throttler#readme
     ThrottlerModule.forRoot([
       {
@@ -47,6 +78,29 @@ import { VoteModule } from '@app/modules/vote/vote.module'
         ignoreUserAgents: [/googlebot/gi, /bingbot/gi, /baidubot/gi]
       }
     ]),
+    I18nModule.forRootAsync({
+      useFactory: (configService: ConfigService<AllConfigType>) => ({
+        fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
+          infer: true,
+        }),
+        loaderOptions: { path: path.join(__dirname, '/i18n/'), watch: true },
+      }),
+      resolvers: [
+        {
+          use: HeaderResolver,
+          useFactory: (configService: ConfigService<AllConfigType>) => {
+            return [
+              configService.get('app.headerLanguage', {
+                infer: true,
+              }),
+            ];
+          },
+          inject: [ConfigService],
+        },
+      ],
+      imports: [ConfigModule],
+      inject: [ConfigService],
+    }),
     HelperModule,
     DatabaseModule,
     CacheModule,

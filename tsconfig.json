@@ -25,7 +25,7 @@
   "typeAcquisition": {
     "include": ["jest"]
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*", "test/**/*", "src/modules/file/file.controller.ts"],
   "exclude": ["node_modules", "dist"],
   "typeRoots": ["node_modules/@types"]
 }

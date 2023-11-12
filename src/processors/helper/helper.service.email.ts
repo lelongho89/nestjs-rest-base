@@ -13,9 +13,9 @@ const log = logger.scope('EmailService')
 
 export interface EmailOptions {
   to: string
-  subject: string
-  text: string
-  html: string
+  subject: string | undefined
+  text: string | undefined
+  html: string | undefined
 }
 
 @Injectable()

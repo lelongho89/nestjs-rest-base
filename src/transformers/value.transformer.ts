@@ -3,7 +3,7 @@
  * @module transformer/value
 */
 
-import { isNumberString, isNumber, isBooleanString, isDateString } from 'class-validator'
+import { isNumberString, isNumber, isBooleanString, isDateString, isDefined } from 'class-validator'
 
 export function unknownToNumber(value: unknown): number | unknown {
   return isNumberString(value) ? Number(value) : value
@@ -25,4 +25,8 @@ export function numberToBoolean(value: number): boolean | number {
   })
     ? Boolean(value)
     : value
+}
+
+export function lowerCase(value: unknown): number | unknown {
+  return isDefined(value) ? String(value).toLowerCase().trim() : value
 }

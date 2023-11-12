@@ -1,30 +1,34 @@
-/**
- * @file Auth module
- * @module module/auth/module
-*/
-
-import type jwt from 'jsonwebtoken'
-import { Module } from '@nestjs/common'
-import { JwtModule } from '@nestjs/jwt'
-import { PassportModule } from '@nestjs/passport'
-import { AuthController } from './auth.controller'
-import { AuthProvider } from './auth.model'
-import { AuthService } from './auth.service'
-import { JwtStrategy } from './jwt.strategy'
-import * as APP_CONFIG from '@app/app.config'
+import { Module } from '@nestjs/common';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { AnonymousStrategy } from './strategies/anonymous.strategy';
+import { UserModule } from '@app/modules/user/user.module';
+import { ForgotModule } from '@app/modules/forgot/forgot.module';
+import { MailModule } from '@app/modules/mail/mail.module';
+import { SessionModule } from '@app/modules/session/session.module';
+import { FileModule } from '@app/modules/file/file.module';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 @Module({
   imports: [
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      privateKey: APP_CONFIG.AUTH.jwtSecret as jwt.Secret,
-      signOptions: {
-        expiresIn: APP_CONFIG.AUTH.expiresIn as number
-      }
-    })
+    UserModule,
+    ForgotModule,
+    SessionModule,
+    PassportModule,
+    MailModule,
+    FileModule,
+    JwtModule.register({}),
   ],
   controllers: [AuthController],
-  providers: [AuthProvider, AuthService, JwtStrategy],
-  exports: [AuthService]
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    AnonymousStrategy,
+  ],
+  exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule { }

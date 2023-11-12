@@ -46,6 +46,16 @@ export enum CommentState {
   Spam = -2
 }
 
+export enum StatusEnum {
+  Active = 1,
+  Inactive = 2,
+}
+
+export enum RoleEnum {
+  Admin = 1,
+  User = 2,
+}
+
 export const GUESTBOOK_POST_ID = 0
 export const ROOT_COMMENT_PID = 0
 export const ROOT_FEEDBACK_TID = 0

@@ -1,80 +1,132 @@
-/**
- * @file Auth controller
- * @module module/auth/controller
-*/
-
-import { Controller, Get, Put, Post, Body, UseGuards, HttpStatus } from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Request,
+    Post,
+    UseGuards,
+    Patch,
+    Delete,
+    SerializeOptions,
+} from '@nestjs/common';
+import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
-import { IPService } from '@app/processors/helper/helper.service.ip'
-import { EmailService } from '@app/processors/helper/helper.service.email'
-import { Responser } from '@app/decorators/responser.decorator'
-import { QueryParams, QueryParamsResult } from '@app/decorators/queryparams.decorator'
-import { AuthLoginDTO, AuthUpdateDTO } from './auth.dto'
-import { AuthService } from './auth.service'
-import { TokenResult } from './auth.interface'
-import { Auth } from './auth.model'
-import { APP } from '@app/app.config'
+import { MongooseID, MongooseDoc, MongooseModel } from '@app/interfaces/mongoose.interface';
+import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
+import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
+import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
+import { AuthResetPasswordDto } from './dto/auth-reset-password.dto';
+import { AuthUpdateDto } from './dto/auth-update.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
+import { LoginResponseType } from './types/login-response.type';
+import { User } from '@app/modules/user/user.model';
 
-@ApiBearerAuth()
 @ApiTags('Auth')
-@Controller('auth')
+@Controller({
+    path: 'auth',
+    version: '1',
+})
 export class AuthController {
-  constructor(
-    private readonly ipService: IPService,
-    private readonly emailService: EmailService,
-    private readonly authService: AuthService
-  ) {}
+    constructor(private readonly service: AuthService) { }
 
-  @Post('login')
-  @Responser.handle({ message: 'Login', error: HttpStatus.BAD_REQUEST })
-  async login(
-    @QueryParams() { visitor: { ip } }: QueryParamsResult,
-    @Body() body: AuthLoginDTO
-  ): Promise<TokenResult> {
-    const token = await this.authService.adminLogin(body.password)
-    if (ip) {
-      this.ipService.queryLocation(ip).then((location) => {
-        const subject = `App has new login activity`
-        const locationText = location ? [location.country, location.region, location.city].join(' · ') : 'unknow'
-        const content = `${subject}, IP: ${ip}, location: ${locationText}`
-        this.emailService.sendMailAs(APP.NAME, {
-          to: APP.ADMIN_EMAIL,
-          subject,
-          text: content,
-          html: content
-        })
-      })
+    @SerializeOptions({
+        groups: ['me'],
+    })
+    @Post('email/login')
+    @HttpCode(HttpStatus.OK)
+    public login(
+        @Body() loginDto: AuthEmailLoginDto,
+    ): Promise<LoginResponseType> {
+        return this.service.validateLogin(loginDto);
     }
-    return token
-  }
 
-  @Get('admin')
-  @Responser.handle('Get admin info')
-  getAdminInfo(): Promise<Auth> {
-    return this.authService.getAdminInfo()
-  }
+    @Post('email/register')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
+        return this.service.register(createUserDto);
+    }
 
-  @Put('admin')
-  @UseGuards(AdminOnlyGuard)
-  @Responser.handle('Update admin info')
-  putAdminInfo(@Body() auth: AuthUpdateDTO): Promise<Auth> {
-    return this.authService.putAdminInfo(auth)
-  }
+    @Post('email/confirm')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async confirmEmail(
+        @Body() confirmEmailDto: AuthConfirmEmailDto,
+    ): Promise<void> {
+        return this.service.confirmEmail(confirmEmailDto.hash);
+    }
 
-  // check token
-  @Post('check')
-  @UseGuards(AdminOnlyGuard)
-  @Responser.handle('Check token')
-  checkToken(): string {
-    return 'ok'
-  }
+    @Post('forgot/password')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async forgotPassword(
+        @Body() forgotPasswordDto: AuthForgotPasswordDto,
+    ): Promise<void> {
+        return this.service.forgotPassword(forgotPasswordDto.email);
+    }
 
-  // refresh token
-  @Post('renewal')
-  @UseGuards(AdminOnlyGuard)
-  @Responser.handle('Renewal Token')
-  renewalToken(): TokenResult {
-    return this.authService.createToken()
-  }
+    @Post('reset/password')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto): Promise<void> {
+        return this.service.resetPassword(
+            resetPasswordDto.hash,
+            resetPasswordDto.password,
+        );
+    }
+
+    @ApiBearerAuth()
+    @SerializeOptions({
+        groups: ['me'],
+    })
+    @Get('me')
+    @UseGuards(AuthGuard('jwt'))
+    @HttpCode(HttpStatus.OK)
+    public me(@Request() request): Promise<MongooseDoc<User>> {
+        return this.service.me(request.user);
+    }
+
+    @ApiBearerAuth()
+    @SerializeOptions({
+        groups: ['me'],
+    })
+    @Post('refresh')
+    @UseGuards(AuthGuard('jwt-refresh'))
+    @HttpCode(HttpStatus.OK)
+    public refresh(@Request() request): Promise<Omit<LoginResponseType, 'user'>> {
+        return this.service.refreshToken({
+            sessionId: request.user.sessionId,
+        });
+    }
+
+    @ApiBearerAuth()
+    @Post('logout')
+    @UseGuards(AuthGuard('jwt'))
+    @HttpCode(HttpStatus.NO_CONTENT)
+    public async logout(@Request() request): Promise<void> {
+        await this.service.logout({
+            sessionId: request.user.sessionId,
+        });
+    }
+
+    @ApiBearerAuth()
+    @SerializeOptions({
+        groups: ['me'],
+    })
+    @Patch('me')
+    @UseGuards(AuthGuard('jwt'))
+    @HttpCode(HttpStatus.OK)
+    public update(
+        @Request() request,
+        @Body() userDto: AuthUpdateDto,
+    ): Promise<MongooseDoc<User>> {
+        return this.service.update(request.user, userDto);
+    }
+
+    @ApiBearerAuth()
+    @Delete('me')
+    @UseGuards(AuthGuard('jwt'))
+    @HttpCode(HttpStatus.NO_CONTENT)
+    public async delete(@Request() request): Promise<void> {
+        return this.service.delete(request.user);
+    }
 }
