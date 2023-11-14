@@ -32,7 +32,7 @@ export class MailService {
       ]);
     }
 
-    await this.emailService.sendMailAs(APP_CONFIG.APP.NAME, {
+    await this.emailService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
       to: mailData.to,
       subject: emailConfirmTitle,
       text: `${this.configService.get('app.frontendDomain', {
@@ -82,7 +82,7 @@ export class MailService {
       ]);
     }
 
-    await this.emailService.sendMailAs(APP_CONFIG.APP.NAME, {
+    await this.emailService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
       to: mailData.to,
       subject: resetPasswordTitle,
       text: `${this.configService.get('app.frontendDomain', {
@@ -113,6 +113,15 @@ export class MailService {
           text4,
         }
       }))
+    });
+  }
+
+  public async alarmMail(subject: string, mailData: MailData<{ error: string }>): Promise<void> {
+    this.emailService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
+      to: mailData.to,
+      subject: `${subject}`,
+      text: mailData.data.error,
+      html: `<pre><code>${mailData.data.error}</code></pre>`
     });
   }
 

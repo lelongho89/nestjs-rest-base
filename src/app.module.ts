@@ -26,6 +26,7 @@ import facebookConfig from '@app/config/facebook.config';
 import googleConfig from '@app/config/google.config';
 import twitterConfig from '@app/config/twitter.config';
 import appleConfig from '@app/config/apple.config';
+import redisConfig from '@app/config/redis.config';
 import { AllConfigType } from '@app/config/config.type';
 
 // middlewares
@@ -67,6 +68,7 @@ import { VoteModule } from '@app/modules/vote/vote.module'
         googleConfig,
         twitterConfig,
         appleConfig,
+        redisConfig,
       ],
       envFilePath: ['.env'],
     }),

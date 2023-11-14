@@ -10,9 +10,10 @@
 import lodash from 'lodash'
 import { createClient, RedisClientType } from 'redis'
 import { Injectable } from '@nestjs/common'
-import { EmailService } from '@app/processors/helper/helper.service.email'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
+import { MailService } from '@app/modules/mail/mail.service'
 import { createRedisStore, RedisStore, RedisClientOptions } from './redis.store'
-import * as APP_CONFIG from '@app/app.config'
 import logger from '@app/utils/logger'
 
 const log = logger.scope('RedisService')
@@ -22,11 +23,14 @@ export class RedisService {
   private redisStore!: RedisStore
   private redisClient!: RedisClientType
 
-  constructor(private readonly emailService: EmailService) {
+  constructor(
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService<AllConfigType>
+  ) {
     this.redisClient = createClient(this.getOptions()) as RedisClientType
     this.redisStore = createRedisStore(this.redisClient, {
-      defaultTTL: APP_CONFIG.APP.DEFAULT_CACHE_TTL,
-      namespace: APP_CONFIG.REDIS.namespace
+      defaultTTL: this.configService.getOrThrow('app.defaultCacheTtl', { infer: true }),
+      namespace: this.configService.getOrThrow('redis.namespace', { infer: true })
     })
     // https://github.com/redis/node-redis#events
     this.redisClient.on('connect', () => log.info('connecting...'))
@@ -39,12 +43,7 @@ export class RedisService {
   }
 
   private sendAlarmMail = lodash.throttle((error: string) => {
-    this.emailService.sendMailAs(APP_CONFIG.APP.NAME, {
-      to: APP_CONFIG.APP.ADMIN_EMAIL,
-      subject: `Redis Error!`,
-      text: error,
-      html: `<pre><code>${error}</code></pre>`
-    })
+    this.mailService.alarmMail(`Redis Error!`, { to: this.configService.getOrThrow('app.adminEmail', { infer: true }), data: { error } });
   }, 1000 * 30)
 
   // https://github.com/redis/node-redis/blob/master/docs/client-configuration.md#reconnect-strategy
@@ -62,16 +61,17 @@ export class RedisService {
   private getOptions(): RedisClientOptions {
     const redisOptions: RedisClientOptions = {
       socket: {
-        host: APP_CONFIG.REDIS.host,
-        port: APP_CONFIG.REDIS.port as number,
+        host: this.configService.getOrThrow('redis.host', { infer: true }),
+        port: this.configService.getOrThrow('redis.port', { infer: true }) as number,
         reconnectStrategy: this.retryStrategy.bind(this)
       }
     }
-    if (APP_CONFIG.REDIS.username) {
-      redisOptions.username = APP_CONFIG.REDIS.username
+
+    if (this.configService.getOrThrow('redis.username', { infer: true })) {
+      redisOptions.username = this.configService.getOrThrow('redis.username', { infer: true });
     }
-    if (APP_CONFIG.REDIS.password) {
-      redisOptions.password = APP_CONFIG.REDIS.password
+    if (this.configService.getOrThrow('redis.password', { infer: true })) {
+      redisOptions.password = this.configService.getOrThrow('redis.password', { infer: true })
     }
 
     return redisOptions

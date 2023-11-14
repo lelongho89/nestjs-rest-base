@@ -8,6 +8,8 @@ export type AppConfig = {
   apiPrefix: string;
   fallbackLanguage: string;
   headerLanguage: string;
+  defaultCacheTtl?: number;
+  adminEmail: string;
 };
 
 export type AppleConfig = {
@@ -23,19 +25,6 @@ export type AuthConfig = {
 
 export type DatabaseConfig = {
   url?: string;
-  type?: string;
-  host?: string;
-  port?: number;
-  password?: string;
-  name?: string;
-  username?: string;
-  synchronize?: boolean;
-  maxConnections: number;
-  sslEnabled?: boolean;
-  rejectUnauthorized?: boolean;
-  ca?: string;
-  key?: string;
-  cert?: string;
 };
 
 export type FacebookConfig = {
@@ -75,11 +64,20 @@ export type TwitterConfig = {
   consumerSecret?: string;
 };
 
+export type RedisConfig = {
+  namespace?: string;
+  host?: string;
+  port: number;
+  username?: string;
+  password?: string;
+};
+
 export type AllConfigType = {
   app: AppConfig;
   apple: AppleConfig;
   auth: AuthConfig;
   database: DatabaseConfig;
+  redis: RedisConfig;
   facebook: FacebookConfig;
   file: FileConfig;
   google: GoogleConfig;

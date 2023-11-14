@@ -5,13 +5,15 @@
 
 import nodemailer from 'nodemailer'
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { getMessageFromNormalError } from '@app/transformers/error.transformer'
-import * as APP_CONFIG from '@app/app.config'
+import { AllConfigType } from '@app/config/config.type'
 import logger from '@app/utils/logger'
 
 const log = logger.scope('EmailService')
 
 export interface EmailOptions {
+  from?: string | null
   to: string
   subject: string | undefined
   text: string | undefined
@@ -23,14 +25,16 @@ export class EmailService {
   private transporter: nodemailer.Transporter
   private clientIsValid: boolean
 
-  constructor() {
+  constructor(private configService: ConfigService<AllConfigType>) {
     this.transporter = nodemailer.createTransport({
-      host: APP_CONFIG.EMAIL.host,
-      port: APP_CONFIG.EMAIL.port,
-      secure: false,
+      host: this.configService.getOrThrow('mail.host', { infer: true }),
+      port: this.configService.getOrThrow('mail.port', { infer: true }),
+      ignoreTLS: this.configService.get('mail.ignoreTLS', { infer: true }),
+      secure: this.configService.getOrThrow('mail.secure', { infer: true }),
+      requireTLS: this.configService.get('mail.requireTLS', { infer: true }),
       auth: {
-        user: APP_CONFIG.EMAIL.account,
-        pass: APP_CONFIG.EMAIL.password
+        user: this.configService.getOrThrow('mail.user', { infer: true }),
+        pass: this.configService.getOrThrow('mail.password', { infer: true })
       }
     })
     this.verifyClient()
@@ -58,7 +62,13 @@ export class EmailService {
     this.transporter.sendMail(
       {
         ...mailOptions,
-        from: APP_CONFIG.EMAIL.from
+        from: mailOptions.from
+          ? mailOptions.from
+          : `"${this.configService.get('mail.defaultName', {
+            infer: true,
+          })}" <${this.configService.get('mail.defaultEmail', {
+            infer: true,
+          })}>`
       },
       (error, info) => {
         if (error) {

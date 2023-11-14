@@ -20,4 +20,4 @@ const services = [GoogleService, AkismetService, AWSService, EmailService, SeoSe
   providers: services,
   exports: services
 })
-export class HelperModule {}
+export class HelperModule { }

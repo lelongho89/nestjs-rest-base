@@ -4,31 +4,27 @@
 */
 
 import mongoose from 'mongoose'
-import { EmailService } from '@app/processors/helper/helper.service.email'
+import { ConfigService } from '@nestjs/config'
+import { MailService } from '@app/modules/mail/mail.service'
 import { DB_CONNECTION_TOKEN } from '@app/constants/system.constant'
-import * as APP_CONFIG from '@app/app.config'
+import { AllConfigType } from '@app/config/config.type'
 import logger from '@app/utils/logger'
 
 const log = logger.scope('MongoDB')
 
 export const databaseProvider = {
-  inject: [EmailService],
+  inject: [MailService],
   provide: DB_CONNECTION_TOKEN,
-  useFactory: async (emailService: EmailService) => {
+  useFactory: async (mailService: MailService, configService: ConfigService<AllConfigType>) => {
     let reconnectionTask: NodeJS.Timeout | null = null
     const RECONNECT_INTERVAL = 6000
 
     const sendAlarmMail = (error: string) => {
-      emailService.sendMailAs(APP_CONFIG.APP.NAME, {
-        to: APP_CONFIG.APP.ADMIN_EMAIL,
-        subject: `MongoDB Error!`,
-        text: error,
-        html: `<pre><code>${error}</code></pre>`
-      })
+      mailService.alarmMail(`MongoDB Error!`, { to: configService.getOrThrow('app.adminEmail', { infer: true }), data: { error } });
     }
 
     const connection = () => {
-      return mongoose.connect(APP_CONFIG.MONGO_DB.uri, {})
+      return mongoose.connect(configService.getOrThrow('database.url', { infer: true }), {})
     }
 
     // DeprecationWarning: Mongoose: the `strictQuery` option will be switched back to `false` by default in Mongoose 7.
