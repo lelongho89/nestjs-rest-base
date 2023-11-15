@@ -6,13 +6,12 @@ import { ConfigService } from '@nestjs/config';
 import { I18nContext } from 'nestjs-i18n';
 import { MailData } from './interfaces/mail-data.interface';
 import { AllConfigType } from '@app/config/config.type';
-import { EmailService } from '@app/processors/helper/helper.service.email'
-import * as APP_CONFIG from '@app/app.config'
+import { MailerService } from '@app/processors/helper/helper.service.mailer'
 
 @Injectable()
 export class MailService {
   constructor(
-    private readonly emailService: EmailService,
+    private readonly mailerService: MailerService,
     private readonly configService: ConfigService<AllConfigType>,
   ) { }
 
@@ -32,7 +31,7 @@ export class MailService {
       ]);
     }
 
-    await this.emailService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
+    await this.mailerService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
       to: mailData.to,
       subject: emailConfirmTitle,
       text: `${this.configService.get('app.frontendDomain', {
@@ -82,7 +81,7 @@ export class MailService {
       ]);
     }
 
-    await this.emailService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
+    await this.mailerService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
       to: mailData.to,
       subject: resetPasswordTitle,
       text: `${this.configService.get('app.frontendDomain', {
@@ -116,12 +115,47 @@ export class MailService {
     });
   }
 
+  public async dailyStatistics(mailData: MailData<object>): Promise<void> {
+
+    await this.mailerService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
+      to: mailData.to,
+      subject: `Daily Statistics`,
+      text: `Daily Statistics`,
+      ...(await this.getMailContent({
+        templatePath: path.join(
+          this.configService.getOrThrow('app.workingDirectory', {
+            infer: true,
+          }),
+          'src',
+          'modules',
+          'mail',
+          'mail-templates',
+          'daily-statistics.hbs',
+        ),
+        context: {
+          title: `Daily Statistics`,
+          app_name: this.configService.get('app.name', { infer: true }),
+          ...mailData.data
+        }
+      }))
+    });
+  }
+
   public async alarmMail(subject: string, mailData: MailData<{ error: string }>): Promise<void> {
-    this.emailService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
+    this.mailerService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
       to: mailData.to,
       subject: `${subject}`,
       text: mailData.data.error,
       html: `<pre><code>${mailData.data.error}</code></pre>`
+    });
+  }
+
+  public async dbBackup(subject: string, mailData: MailData<{ content: string, isCode?: boolean }>): Promise<void> {
+    this.mailerService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
+      to: mailData.to,
+      subject: `${subject}`,
+      text: `${subject}, detail: ${mailData.data.content}`,
+      html: `${subject} <br> ${mailData.data.isCode ? `<pre>${mailData.data.content}</pre>` : mailData.data.content}`
     });
   }
 

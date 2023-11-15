@@ -3,13 +3,13 @@
  * @module app/module
 */
 
+import path from 'path';
 import { APP_INTERCEPTOR, APP_GUARD, APP_PIPE } from '@nestjs/core'
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule, minutes } from '@nestjs/throttler'
 import { I18nModule } from 'nestjs-i18n/dist/i18n.module';
 import { HeaderResolver } from 'nestjs-i18n';
-import path from 'path';
 import { AppController } from '@app/app.controller'
 
 // framework
@@ -27,6 +27,9 @@ import googleConfig from '@app/config/google.config';
 import twitterConfig from '@app/config/twitter.config';
 import appleConfig from '@app/config/apple.config';
 import redisConfig from '@app/config/redis.config';
+import projectConfig from '@app/config/project.config';
+import disqusConfig from '@app/config/disqus.config';
+import akismetConfig from '@app/config/akismet.config';
 import { AllConfigType } from '@app/config/config.type';
 
 // middlewares
@@ -69,6 +72,9 @@ import { VoteModule } from '@app/modules/vote/vote.module'
         twitterConfig,
         appleConfig,
         redisConfig,
+        projectConfig,
+        disqusConfig,
+        akismetConfig,
       ],
       envFilePath: ['.env'],
     }),

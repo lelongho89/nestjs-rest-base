@@ -3,7 +3,6 @@
  * @module module/helper/seo.service
 */
 
-import * as APP_CONFIG from '@app/app.config'
 import { HttpService } from '@nestjs/axios'
 import { Injectable } from '@nestjs/common'
 import { getMessageFromAxiosError } from '@app/transformers/error.transformer'
@@ -24,7 +23,7 @@ export class SeoService {
   constructor(
     private readonly httpService: HttpService,
     private readonly googleService: GoogleService
-  ) {}
+  ) { }
 
   // Google: https://developers.google.com/search/apis/indexing-api
   private pingGoogle(action: SEOAction, urls: string[]): void {

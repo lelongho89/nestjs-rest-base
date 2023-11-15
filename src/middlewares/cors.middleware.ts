@@ -5,20 +5,23 @@
 
 import { Request, Response } from 'express'
 import { Injectable, NestMiddleware, HttpStatus, RequestMethod } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { isDevEnv } from '@app/app.environment'
-import * as APP_CONFIG from '@app/app.config'
+import { AllConfigType } from '@app/config/config.type'
 
 /**
  * @class CorsMiddleware
  * @classdesc CORS*/
 @Injectable()
 export class CorsMiddleware implements NestMiddleware {
+  constructor(private configService: ConfigService<AllConfigType>) { }
+
   use(request: Request, response: Response, next) {
     const getMethod = (method) => RequestMethod[method]
     const origins = request.headers.origin
     const origin = (Array.isArray(origins) ? origins[0] : origins) || ''
 
-    const allowedOrigins = [...APP_CONFIG.CROSS_DOMAIN.allowedOrigins]
+    const allowedOrigins = this.configService.getOrThrow('app.allowedOrigins', { infer: true });
     const allowedMethods = [
       RequestMethod.GET,
       RequestMethod.HEAD,
@@ -55,7 +58,7 @@ export class CorsMiddleware implements NestMiddleware {
     response.header('Access-Control-Allow-Methods', allowedMethods.map(getMethod).join(','))
     response.header('Access-Control-Max-Age', '1728000')
     response.header('Content-Type', 'application/json; charset=utf-8')
-    response.header('X-Powered-By', `${APP_CONFIG.PROJECT.name} ${APP_CONFIG.PROJECT.version}`)
+    response.header('X-Powered-By', `${this.configService.getOrThrow('project.name', { infer: true })} ${this.configService.getOrThrow('project.version', { infer: true })}`)
 
     // OPTIONS Request
     if (request.method === getMethod(RequestMethod.OPTIONS)) {

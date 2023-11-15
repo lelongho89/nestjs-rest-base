@@ -5,9 +5,10 @@
 
 import { AkismetClient } from 'akismet-api'
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
 import { UNDEFINED } from '@app/constants/value.constant'
 import { getMessageFromNormalError } from '@app/transformers/error.transformer'
-import * as APP_CONFIG from '@app/app.config'
 import logger from '@app/utils/logger'
 
 const log = logger.scope('AkismetService')
@@ -37,7 +38,7 @@ export class AkismetService {
   private client: AkismetClient
   private clientIsValid = false
 
-  constructor() {
+  constructor(private configService: ConfigService<AllConfigType>) {
     this.initClient()
     this.initVerify()
   }
@@ -45,8 +46,8 @@ export class AkismetService {
   private initClient(): void {
     // https://github.com/chrisfosterelli/akismet-api
     this.client = new AkismetClient({
-      key: APP_CONFIG.AKISMET.key as string,
-      blog: APP_CONFIG.AKISMET.blog as string
+      key: this.configService.getOrThrow('akismet.key', { infer: true }),
+      blog: this.configService.getOrThrow('akismet.blog', { infer: true })
     })
   }
 

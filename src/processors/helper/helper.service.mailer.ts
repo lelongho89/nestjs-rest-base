@@ -21,7 +21,7 @@ export interface EmailOptions {
 }
 
 @Injectable()
-export class EmailService {
+export class MailerService {
   private transporter: nodemailer.Transporter
   private clientIsValid: boolean
 

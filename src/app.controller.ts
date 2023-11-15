@@ -4,12 +4,17 @@
 */
 
 import { Get, Controller } from '@nestjs/common'
-import * as APP_CONFIG from './app.config'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
 
 @Controller()
 export class AppController {
+  constructor(
+    private readonly configService: ConfigService<AllConfigType>,
+  ) { }
+
   @Get('/ping')
   root(): any {
-    return APP_CONFIG.PROJECT
+    return this.configService.getOrThrow('project');
   }
 }

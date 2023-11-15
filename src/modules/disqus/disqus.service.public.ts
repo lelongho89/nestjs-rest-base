@@ -4,13 +4,14 @@
 */
 
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
 import { CommentService } from '@app/modules/comment/comment.service'
 import { Comment, CommentBase } from '@app/modules/comment/comment.model'
 import { QueryVisitor } from '@app/decorators/queryparams.decorator'
 import { CommentState } from '@app/constants/biz.constant'
 import { getDisqusCacheKey } from '@app/constants/cache.constant'
 import { CacheService } from '@app/processors/cache/cache.service'
-import { DISQUS } from '@app/app.config'
 import { Disqus } from '@app/utils/disqus'
 import { getExtendObject, getExtendValue } from '@app/transformers/extend.transformer'
 import { getPermalinkByID } from '@app/transformers/urlmap.transformer'
@@ -27,11 +28,12 @@ export class DisqusPublicService {
   constructor(
     private readonly cacheService: CacheService,
     private readonly commentService: CommentService,
-    private readonly disqusPrivateService: DisqusPrivateService
+    private readonly disqusPrivateService: DisqusPrivateService,
+    private readonly configService: ConfigService<AllConfigType>,
   ) {
     this.disqus = new Disqus({
-      apiKey: DISQUS.publicKey,
-      apiSecret: DISQUS.secretKey
+      apiKey: this.configService.getOrThrow('disqus.publicKey', { infer: true }),
+      apiSecret: this.configService.getOrThrow('disqus.secretKey', { infer: true })
     })
   }
 
@@ -81,7 +83,7 @@ export class DisqusPublicService {
 
   public ensureThreadDetail(postID: number) {
     return this.disqus
-      .request('threads/details', { forum: DISQUS.forum, thread: `link:${getPermalinkByID(postID)}` })
+      .request('threads/details', { forum: this.configService.getOrThrow('disqus.forum', { infer: true }), thread: `link:${getPermalinkByID(postID)}` })
       .then((response) => response.response)
       .catch(() => this.disqusPrivateService.createThread(postID))
   }
@@ -183,7 +185,7 @@ export class DisqusPublicService {
     if (disqusPost.author.isAnonymous && !disqusPost.isApproved) {
       try {
         await this.disqusPrivateService.approvePost({ post: disqusPost.id, newUserPremodBypass: 1 })
-      } catch (error) {}
+      } catch (error) { }
     }
     // 7. create comment
     newComment.author.name = disqusPost.author.name || newComment.author.name

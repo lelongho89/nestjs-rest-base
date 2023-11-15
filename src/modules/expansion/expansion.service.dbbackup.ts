@@ -9,14 +9,16 @@ import shell from 'shelljs'
 import dayjs from 'dayjs'
 import schedule from 'node-schedule'
 import { Injectable } from '@nestjs/common'
-import { EmailService } from '@app/processors/helper/helper.service.email'
+import { ConfigService } from '@nestjs/config'
+import { MailService } from '@app/modules/mail/mail.service'
+import { AllConfigType } from '@app/config/config.type'
 import {
   UploadResult,
   AWSService,
   AWSStorageClass,
   AWSServerSideEncryption
 } from '@app/processors/helper/helper.service.aws'
-import { APP, MONGO_DB, DB_BACKUP } from '@app/app.config'
+import { DB_BACKUP } from '@app/app.config'
 import logger from '@app/utils/logger'
 
 const log = logger.scope('DBBackupService')
@@ -24,13 +26,14 @@ const log = logger.scope('DBBackupService')
 const UP_FAILED_TIMEOUT = 1000 * 60 * 5
 const UPLOAD_INTERVAL = '0 0 3 * * *'
 const BACKUP_FILE_NAME = 'app.zip'
-const BACKUP_DIR_PATH = path.join(APP.ROOT_PATH, 'dbbackup')
+
 
 @Injectable()
 export class DBBackupService {
   constructor(
-    private readonly emailService: EmailService,
-    private readonly awsService: AWSService
+    private readonly mailService: MailService,
+    private readonly awsService: AWSService,
+    private readonly configService: ConfigService<AllConfigType>,
   ) {
     log.info('schedule job initialized.')
     schedule.scheduleJob(UPLOAD_INTERVAL, () => {
@@ -44,21 +47,18 @@ export class DBBackupService {
     try {
       const result = await this.doBackup()
       const json = { ...result, size: (result.size / 1024).toFixed(2) + 'kb' }
-      this.mailToAdmin('Database backup succeed', JSON.stringify(json, null, 2), true)
+      this.mailService.dbBackup('Database backup succeed', {
+        to: this.configService.getOrThrow('app.adminEmail', { infer: true }),
+        data: { content: JSON.stringify(json, null, 2), isCode: true }
+      });
       return result
     } catch (error) {
-      this.mailToAdmin('Database backup failed!', String(error))
+      this.mailService.dbBackup('Database backup failed!', {
+        to: this.configService.getOrThrow('app.adminEmail', { infer: true }),
+        data: { content: String(error) }
+      });
       throw error
     }
-  }
-
-  private mailToAdmin(subject: string, content: string, isCode?: boolean) {
-    this.emailService.sendMailAs(APP.NAME, {
-      to: APP.ADMIN_EMAIL,
-      subject,
-      text: `${subject}, detail: ${content}`,
-      html: `${subject} <br> ${isCode ? `<pre>${content}</pre>` : content}`
-    })
   }
 
   private doBackup() {
@@ -67,13 +67,17 @@ export class DBBackupService {
         return reject('DB Backup script requires [mongodump]')
       }
 
+      const BACKUP_DIR_PATH = path.join(this.configService.getOrThrow('app.workingDirectory', {
+        infer: true,
+      }), 'dbbackup');
+
       shell.cd(BACKUP_DIR_PATH)
       shell.rm('-rf', `./backup.prev`)
       shell.mv('./backup', './backup.prev')
       shell.mkdir('backup')
 
       // https://dba.stackexchange.com/questions/215534/mongodump-unrecognized-field-snapshot
-      shell.exec(`mongodump --forceTableScan --uri="${MONGO_DB.uri}" --out="backup"`, (code, out) => {
+      shell.exec(`mongodump --forceTableScan --uri="${this.configService.getOrThrow('database.url', { infer: true })}" --out="backup"`, (code, out) => {
         log.info('mongodump done.', code, out)
         if (code !== 0) {
           log.warn('mongodump failed!', out)

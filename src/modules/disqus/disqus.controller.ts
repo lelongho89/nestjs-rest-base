@@ -19,12 +19,13 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express'
 import { Throttle, seconds } from '@nestjs/throttler'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
 import { isProdEnv } from '@app/app.environment'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { Responser } from '@app/decorators/responser.decorator'
 import { QueryParams, QueryParamsResult } from '@app/decorators/queryparams.decorator'
 import { CommentBase } from '@app/modules/comment/comment.model'
-import { DISQUS } from '@app/app.config'
 import { AccessToken } from '@app/utils/disqus'
 import { DisqusPublicService } from './disqus.service.public'
 import { DisqusPrivateService } from './disqus.service.private'
@@ -37,8 +38,9 @@ import { CallbackCodeDTO, ThreadPostIdDTO, CommentIdDTO, GeneralDisqusParams } f
 export class DisqusController {
   constructor(
     private readonly disqusPublicService: DisqusPublicService,
-    private readonly disqusPrivateService: DisqusPrivateService
-  ) {}
+    private readonly disqusPrivateService: DisqusPrivateService,
+    private readonly configService: ConfigService<AllConfigType>,
+  ) { }
 
   // --------------------------------
   // for client Disqus user
@@ -47,9 +49,9 @@ export class DisqusController {
   @Responser.handle('Get Disqus config')
   getConfig() {
     return {
-      forum: DISQUS.forum,
-      admin_username: DISQUS.adminUsername,
-      public_key: DISQUS.publicKey,
+      forum: this.configService.getOrThrow('disqus.forum', { infer: true }),
+      admin_username: this.configService.getOrThrow('disqus.adminUsername', { infer: true }),
+      public_key: this.configService.getOrThrow('disqus.publicKey', { infer: true }),
       authorize_url: this.disqusPublicService.getAuthorizeURL()
     }
   }

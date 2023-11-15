@@ -4,6 +4,8 @@ export type AppConfig = {
   workingDirectory: string;
   frontendDomain?: string;
   backendDomain: string;
+  allowedOrigins: string[];
+  allowedReferer: string;
   port: number;
   apiPrefix: string;
   fallbackLanguage: string;
@@ -11,6 +13,12 @@ export type AppConfig = {
   defaultCacheTtl?: number;
   adminEmail: string;
 };
+
+export type ProjectConfig = {
+  name: string;
+  author: string;
+  version: string;
+}
 
 export type AppleConfig = {
   appAudience: string[];
@@ -72,8 +80,22 @@ export type RedisConfig = {
   password?: string;
 };
 
+export type DisqusConfig = {
+  adminAccessToken: string;
+  adminUsername: string;
+  forum: string;
+  publicKey: string;
+  secretKey: string;
+}
+
+export type AkismetConfig = {
+  key: string;
+  blog: string;
+}
+
 export type AllConfigType = {
   app: AppConfig;
+  project: ProjectConfig;
   apple: AppleConfig;
   auth: AuthConfig;
   database: DatabaseConfig;
@@ -83,4 +105,6 @@ export type AllConfigType = {
   google: GoogleConfig;
   mail: MailConfig;
   twitter: TwitterConfig;
+  akismet: AkismetConfig;
+  disqus: DisqusConfig;
 };

@@ -7,7 +7,8 @@ import { Request, Response } from 'express'
 import { Injectable, NestMiddleware, HttpStatus } from '@nestjs/common'
 import { HttpResponseError, ResponseStatus } from '@app/interfaces/response.interface'
 import { isProdEnv } from '@app/app.environment'
-import { CROSS_DOMAIN } from '@app/app.config'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
 import * as TEXT from '@app/constants/text.constant'
 
 /**
@@ -15,11 +16,13 @@ import * as TEXT from '@app/constants/text.constant'
  * @classdesc verification request origin and referer*/
 @Injectable()
 export class OriginMiddleware implements NestMiddleware {
+  constructor(private configService: ConfigService<AllConfigType>) { }
+
   use(request: Request, response: Response, next) {
     // production only
     if (isProdEnv) {
       const { origin, referer } = request.headers
-      const isAllowed = (field) => !field || field.includes(CROSS_DOMAIN.allowedReferer)
+      const isAllowed = (field) => !field || field.includes(this.configService.getOrThrow('app.allowedReferer', { infer: true }));
       const isAllowedOrigin = isAllowed(origin)
       const isAllowedReferer = isAllowed(referer)
       if (!isAllowedOrigin && !isAllowedReferer) {

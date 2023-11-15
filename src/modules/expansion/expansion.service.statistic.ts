@@ -5,15 +5,16 @@
 
 import schedule from 'node-schedule'
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { CacheService } from '@app/processors/cache/cache.service'
-import { EmailService } from '@app/processors/helper/helper.service.email'
+import { MailService } from '@app/modules/mail/mail.service'
 import { ArticleService } from '@app/modules/article/article.service'
 import { CommentService } from '@app/modules/comment/comment.service'
 import { FeedbackService } from '@app/modules/feedback/feedback.service'
 import { TagService } from '@app/modules/tag/tag.service'
+import { AllConfigType } from '@app/config/config.type'
 import { getTodayViewsCount, resetTodayViewsCount } from './expansion.helper'
 import logger from '@app/utils/logger'
-import * as APP_CONFIG from '@app/app.config'
 
 const log = logger.scope('StatisticService')
 
@@ -33,11 +34,12 @@ export type Statistic = Record<keyof typeof DEFAULT_STATISTIC, number | null>
 export class StatisticService {
   constructor(
     private readonly cacheService: CacheService,
-    private readonly emailService: EmailService,
+    private readonly mailService: MailService,
     private readonly articleService: ArticleService,
     private readonly commentService: CommentService,
     private readonly feedbackService: FeedbackService,
-    private readonly tagService: TagService
+    private readonly tagService: TagService,
+    private readonly configService: ConfigService<AllConfigType>,
   ) {
     // daily data cleaning at 00:01
     schedule.scheduleJob('1 0 0 * * *', async () => {
@@ -58,18 +60,11 @@ export class StatisticService {
     const todayNewComments = await this.commentService.countDocuments({
       created_at: { $gte: oneDayAgo, $lt: now }
     })
-    const emailContents = [
-      `Today views: ${todayViews}`,
-      `Today new comments: ${todayNewComments}`
-      // `Today Post votes: TODO`,
-      // `Today Comment votes: TODO`,
-    ]
-    this.emailService.sendMailAs(APP_CONFIG.APP.NAME, {
-      to: APP_CONFIG.APP.ADMIN_EMAIL,
-      subject: 'Daily Statistics',
-      text: emailContents.join('\n'),
-      html: emailContents.map((text) => `<p>${text}</p>`).join('\n')
-    })
+
+    this.mailService.dailyStatistics({
+      to: this.configService.getOrThrow('app.adminEmail', { infer: true }),
+      data: { todayViews, todayNewComments }
+    });
   }
 
   public getStatistic(publicOnly: boolean) {

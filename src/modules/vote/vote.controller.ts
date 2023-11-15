@@ -8,13 +8,15 @@ import { UAParser } from 'ua-parser-js'
 import { Controller, Get, Post, Delete, Body, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle, minutes, seconds } from '@nestjs/throttler'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
 import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
 import { ExposePipe } from '@app/pipes/expose.pipe'
 import { Responser } from '@app/decorators/responser.decorator'
 import { PaginateResult, PaginateQuery, PaginateOptions } from '@app/utils/paginate'
 import { QueryParams, QueryParamsResult } from '@app/decorators/queryparams.decorator'
 import { IPService, IPLocation } from '@app/processors/helper/helper.service.ip'
-import { EmailService } from '@app/processors/helper/helper.service.email'
+import { MailerService } from '@app/processors/helper/helper.service.mailer'
 import { OptionService } from '@app/modules/option/option.service'
 import { ArticleService } from '@app/modules/article/article.service'
 import { CommentService } from '@app/modules/comment/comment.service'
@@ -35,13 +37,14 @@ import * as APP_CONFIG from '@app/app.config'
 export class VoteController {
   constructor(
     private readonly ipService: IPService,
-    private readonly emailService: EmailService,
+    private readonly emailService: MailerService,
     private readonly disqusPublicService: DisqusPublicService,
     private readonly commentService: CommentService,
     private readonly articleService: ArticleService,
     private readonly optionService: OptionService,
-    private readonly voteService: VoteService
-  ) {}
+    private readonly voteService: VoteService,
+    private readonly configService: ConfigService<AllConfigType>,
+  ) { }
 
   private async queryIPLocation(ip: string | null) {
     return ip ? await this.ipService.queryLocation(ip) : null
@@ -72,7 +75,7 @@ export class VoteController {
             profileUrl: disqusUserInfo.profileUrl
           }
         }
-      } catch (error) {}
+      } catch (error) { }
     }
 
     // local guest user
@@ -94,7 +97,7 @@ export class VoteController {
     // Disqus user
     if (voteAuthor.type === VoteAuthorType.Disqus) {
       const disqusUser = voteAuthor.data
-      const isAdmin = disqusUser.username === APP_CONFIG.DISQUS.adminUsername
+      const isAdmin = disqusUser.username === this.configService.getOrThrow('disqus.adminUsername', { infer: true });
       const userType = `Disqus ${isAdmin ? `moderator` : 'user'}`
       return [`${disqusUser.name} (${userType})`, disqusUser.profileUrl].filter(Boolean).join(' · ')
     }
@@ -210,7 +213,7 @@ export class VoteController {
         ? await this.optionService.incrementLikes()
         : await this.articleService.incrementLikes(voteBody.post_id)
     // Disqus
-    this.voteDisqusThread(voteBody.post_id, voteBody.vote, token?.access_token).catch(() => {})
+    this.voteDisqusThread(voteBody.post_id, voteBody.vote, token?.access_token).catch(() => { })
     // author
     this.getVoteAuthor({ guestAuthor: voteBody.author, disqusToken: token?.access_token }).then(
       async (voteAuthor) => {
@@ -267,7 +270,7 @@ export class VoteController {
           })
           // console.info(`Disqus like post ${voteBody.comment_id}`, result)
         }
-      } catch (error) {}
+      } catch (error) { }
     }
 
     // effects

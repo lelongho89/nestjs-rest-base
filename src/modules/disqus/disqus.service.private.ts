@@ -6,6 +6,8 @@
 import dayjs from 'dayjs'
 import { XMLParser } from 'fast-xml-parser'
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { AllConfigType } from '@app/config/config.type'
 import { ArticleService } from '@app/modules/article/article.service'
 import { CommentService } from '@app/modules/comment/comment.service'
 import { Comment } from '@app/modules/comment/comment.model'
@@ -13,7 +15,6 @@ import { Article } from '@app/modules/article/article.model'
 import { GUESTBOOK_POST_ID, CommentState } from '@app/constants/biz.constant'
 import { getExtendObject } from '@app/transformers/extend.transformer'
 import { getPermalinkByID } from '@app/transformers/urlmap.transformer'
-import { DISQUS } from '@app/app.config'
 import { Disqus } from '@app/utils/disqus'
 import logger from '@app/utils/logger'
 import { GeneralDisqusParams } from './disqus.dto'
@@ -28,11 +29,12 @@ export class DisqusPrivateService {
 
   constructor(
     private readonly articleService: ArticleService,
-    private readonly commentService: CommentService
+    private readonly commentService: CommentService,
+    private readonly configService: ConfigService<AllConfigType>,
   ) {
     this.disqus = new Disqus({
-      apiKey: DISQUS.publicKey,
-      apiSecret: DISQUS.secretKey
+      apiKey: this.configService.getOrThrow('disqus.publicKey', { infer: true }),
+      apiSecret: this.configService.getOrThrow('disqus.secretKey', { infer: true })
     })
   }
 
@@ -41,14 +43,14 @@ export class DisqusPrivateService {
       const article = await this.articleService.getDetailByNumberIDOrSlug({ idOrSlug: postID, publicOnly: true })
       // https://disqus.com/api/docs/threads/create/
       const response = await this.disqus.request('threads/create', {
-        forum: DISQUS.forum,
+        forum: this.configService.getOrThrow('disqus.forum', { infer: true }),
         identifier: DISQUS_CONST.getThreadIdentifierByID(postID),
         title: article.title,
         message: article.description,
         slug: article.slug || DISQUS_CONST.getThreadIdentifierByID(postID),
         date: dayjs(article.created_at).unix(),
         url: getPermalinkByID(postID),
-        access_token: DISQUS.adminAccessToken
+        access_token: this.configService.getOrThrow('disqus.adminAccessToken', { infer: true })
       })
       return response.response
     } catch (error) {
@@ -61,8 +63,8 @@ export class DisqusPrivateService {
     // https://disqus.com/api/docs/threads/list/
     return this.disqus
       .request('threads/list', {
-        access_token: DISQUS.adminAccessToken,
-        forum: DISQUS.forum,
+        access_token: this.configService.getOrThrow('disqus.adminAccessToken', { infer: true }),
+        forum: this.configService.getOrThrow('disqus.forum', { infer: true }),
         ...params
       })
       .catch((error) => {
@@ -75,8 +77,8 @@ export class DisqusPrivateService {
     // https://disqus.com/api/docs/posts/list/
     return this.disqus
       .request('posts/list', {
-        access_token: DISQUS.adminAccessToken,
-        forum: DISQUS.forum,
+        access_token: this.configService.getOrThrow('disqus.adminAccessToken', { infer: true }),
+        forum: this.configService.getOrThrow('disqus.forum', { infer: true }),
         ...params
       })
       .catch((error) => {
@@ -89,7 +91,7 @@ export class DisqusPrivateService {
     // https://disqus.com/api/docs/threads/update/
     return this.disqus
       .request('threads/update', {
-        access_token: DISQUS.adminAccessToken,
+        access_token: this.configService.getOrThrow('disqus.adminAccessToken', { infer: true }),
         ...params
       })
       .catch((error) => {
@@ -102,7 +104,7 @@ export class DisqusPrivateService {
     // https://disqus.com/api/docs/posts/update/
     return this.disqus
       .request('posts/update', {
-        access_token: DISQUS.adminAccessToken,
+        access_token: this.configService.getOrThrow('disqus.adminAccessToken', { infer: true }),
         ...params
       })
       .catch((error) => {
@@ -115,7 +117,7 @@ export class DisqusPrivateService {
     // https://disqus.com/api/docs/posts/approve/
     return this.disqus
       .request('posts/approve', {
-        access_token: DISQUS.adminAccessToken,
+        access_token: this.configService.getOrThrow('disqus.adminAccessToken', { infer: true }),
         ...params
       })
       .catch((error) => {
