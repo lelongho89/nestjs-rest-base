@@ -22,7 +22,6 @@ import { FileService } from '@app/modules/file/file.service';
 import { User } from '@app/modules/user/user.model';
 import { Forgot } from '@app/modules/forgot/forgot.model';
 import { Session } from '@app/modules/session/session.model';
-import { FileEntity } from '@app/modules/file/file.model';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
 import { AuthProvidersEnum } from './auth-providers.enum';

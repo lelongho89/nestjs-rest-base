@@ -8,14 +8,15 @@ import { TagModule } from '@app/modules/tag/tag.module'
 import { ArticleModule } from '@app/modules/article/article.module'
 import { CommentModule } from '@app/modules/comment/comment.module'
 import { FeedbackModule } from '@app/modules/feedback/feedback.module'
+import { MailModule } from '@app/modules/mail/mail.module'
 import { ExpansionController } from './expansion.controller'
 import { StatisticService } from './expansion.service.statistic'
 import { DBBackupService } from './expansion.service.dbbackup'
 
 @Module({
-  imports: [TagModule, ArticleModule, CommentModule, FeedbackModule],
+  imports: [TagModule, ArticleModule, CommentModule, FeedbackModule, MailModule],
   controllers: [ExpansionController],
   providers: [StatisticService, DBBackupService],
   exports: [StatisticService, DBBackupService]
 })
-export class ExpansionModule {}
+export class ExpansionModule { }

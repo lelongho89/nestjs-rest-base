@@ -14,7 +14,6 @@ import { AllConfigType } from '@app/config/config.type';
 @Module({
   imports: [
     MulterModule.registerAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService<AllConfigType>) => {
         const storages = {
@@ -97,6 +96,6 @@ import { AllConfigType } from '@app/config/config.type';
   ],
   controllers: [FileController],
   providers: [ConfigModule, ConfigService, FileService, FileEntityProvider],
-  exports: [FileModule],
+  exports: [FileService],
 })
 export class FileModule { }

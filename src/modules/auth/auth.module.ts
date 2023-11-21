@@ -27,7 +27,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
     AuthService,
     JwtStrategy,
     JwtRefreshStrategy,
-    AnonymousStrategy,
+    AnonymousStrategy
   ],
   exports: [AuthService],
 })

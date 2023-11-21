@@ -13,7 +13,7 @@ import logger from '@app/utils/logger'
 const log = logger.scope('MongoDB')
 
 export const databaseProvider = {
-  inject: [MailService],
+  inject: [MailService, ConfigService],
   provide: DB_CONNECTION_TOKEN,
   useFactory: async (mailService: MailService, configService: ConfigService<AllConfigType>) => {
     let reconnectionTask: NodeJS.Timeout | null = null

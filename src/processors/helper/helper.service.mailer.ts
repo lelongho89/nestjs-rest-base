@@ -10,7 +10,7 @@ import { getMessageFromNormalError } from '@app/transformers/error.transformer'
 import { AllConfigType } from '@app/config/config.type'
 import logger from '@app/utils/logger'
 
-const log = logger.scope('EmailService')
+const log = logger.scope('MailerService')
 
 export interface EmailOptions {
   from?: string | null

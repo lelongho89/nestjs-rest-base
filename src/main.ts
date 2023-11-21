@@ -10,8 +10,6 @@ import cookieParser from 'cookie-parser'
 import compression from 'compression'
 import { NestFactory } from '@nestjs/core'
 import {
-  ClassSerializerInterceptor,
-  ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -22,9 +20,8 @@ import { TransformInterceptor } from '@app/interceptors/transform.interceptor'
 import { LoggingInterceptor } from '@app/interceptors/logging.interceptor'
 import { ErrorInterceptor } from '@app/interceptors/error.interceptor'
 import { environment, isProdEnv } from '@app/app.environment'
+import { AllConfigType } from '@app/config/config.type';
 import logger from '@app/utils/logger'
-import * as APP_CONFIG from '@app/app.config'
-import { AllConfigType } from './config/config.type';
 
 async function bootstrap() {
   // MARK: keep logger enabled on dev env
@@ -65,9 +62,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('docs', app, document);
 
-  return await app.listen(APP_CONFIG.APP.PORT);
+  return await app.listen(configService.getOrThrow('app.port', { infer: true }), () => {
+    logger.info(`${configService.getOrThrow('app.name', { infer: true })} is running on ${configService.getOrThrow('app.port', { infer: true })}, env: ${environment}.`)
+  });
 }
 
-bootstrap().then(() => {
-  logger.info(`${APP_CONFIG.APP.NAME} is running on ${APP_CONFIG.APP.PORT}, env: ${environment}.`)
-})
+void bootstrap();

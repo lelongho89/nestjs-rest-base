@@ -91,7 +91,17 @@ import { VoteModule } from '@app/modules/vote/vote.module'
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
           infer: true,
         }),
-        loaderOptions: { path: path.join(__dirname, '/i18n/'), watch: true },
+
+        loaderOptions: {
+          path: path.join(
+            configService.getOrThrow('app.workingDirectory', {
+              infer: true,
+            }),
+            'src',
+            'modules',
+            'i18n',
+          ), watch: true
+        },
       }),
       resolvers: [
         {

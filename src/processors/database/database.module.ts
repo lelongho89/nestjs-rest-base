@@ -5,11 +5,11 @@
 
 import { Module, Global } from '@nestjs/common'
 import { databaseProvider } from './database.provider'
-import { MailService } from '@app/modules/mail/mail.service'
+import { MailModule } from '@app/modules/mail/mail.module'
 
 @Global()
 @Module({
-  imports: [MailService],
+  imports: [MailModule],
   providers: [databaseProvider],
   exports: [databaseProvider]
 })
