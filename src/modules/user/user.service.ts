@@ -24,32 +24,15 @@ export class UserService {
     return user;
   }
 
-  public async findOne(filters: FilterQuery<User>): Promise<MongooseDoc<User>> {
-    return await this.userModel
-      .findOne({ ...filters, deleted_at: null })
-      .exec()
-      .then((result) => result || Promise.reject(`User not found`));
+  public async findOne(filters: FilterQuery<User>): Promise<MongooseDoc<User> | null> {
+    return await this.userModel.findOne({ ...filters, deleted_at: null }).exec();
   }
 
-  public async getById(userID: MongooseID): Promise<MongooseDoc<User>> {
+  public async getById(userID: MongooseID | number): Promise<MongooseDoc<User>> {
     return this.userModel
       .findById(userID)
       .exec()
       .then((result) => (result?.deleted_at ? null : result) || Promise.reject(`User '${userID}' not found`));
-  }
-
-  public async getByEmail(email: string): Promise<MongooseDoc<User>> {
-    return this.userModel
-      .findOne({ email, deleted_at: null })
-      .exec()
-      .then(result => result || Promise.reject(`User not found`));
-  }
-
-  public async getByHash(hash: string): Promise<MongooseDoc<User>> {
-    return this.userModel
-      .findOne({ hash, deleted_at: null })
-      .exec()
-      .then(result => result || Promise.reject(`User not found`));
   }
 
   public async softDelete(userID: MongooseID | number): Promise<boolean> {

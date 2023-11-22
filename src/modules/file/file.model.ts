@@ -7,6 +7,7 @@ import { generalAutoIncrementIDConfig } from '@app/constants/increment.constant'
 @plugin(AutoIncrementID, generalAutoIncrementIDConfig)
 @modelOptions({
   schemaOptions: {
+    collection: 'files',
     versionKey: false,
     timestamps: {
       createdAt: 'created_at',

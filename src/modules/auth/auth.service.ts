@@ -299,9 +299,7 @@ export class AuthService {
   }
 
   async me(userJwtPayload: JwtPayloadType): Promise<MongooseDoc<User>> {
-    return this.userService.findOne({
-      id: userJwtPayload.id,
-    });
+    return this.userService.getById(userJwtPayload.id);
   }
 
   async update(
@@ -309,9 +307,7 @@ export class AuthService {
     userDto: AuthUpdateDto,
   ): Promise<MongooseDoc<User>> {
 
-    const currentUser = await this.userService.findOne({
-      id: userJwtPayload.id,
-    });
+    const currentUser = await this.userService.getById(userJwtPayload.id);
 
     if (userDto.password) {
       if (userDto.oldPassword) {
@@ -382,11 +378,7 @@ export class AuthService {
   async refreshToken(
     data: Pick<JwtRefreshPayloadType, 'sessionId'>,
   ): Promise<Omit<LoginResponseType, 'user'>> {
-    const session = await this.sessionService.findOne({
-      where: {
-        id: data.sessionId,
-      },
-    });
+    const session = await this.sessionService.findOne({ id: data.sessionId });
 
     if (!session) {
       throw new UnauthorizedException();
@@ -410,9 +402,7 @@ export class AuthService {
   }
 
   async logout(data: Pick<JwtRefreshPayloadType, 'sessionId'>) {
-    return this.sessionService.delete({
-      id: data.sessionId,
-    });
+    return this.sessionService.delete({ id: data.sessionId });
   }
 
   private async getTokensData(data: {

@@ -30,7 +30,7 @@ const renderMessage = (color: chalk.Chalk, messages: any[]) => {
 const renderLog = (method: LoggerLevel, level: string, color: chalk.Chalk, scope?: string) => {
   return (...messages: any) => {
     const logs: any[] = []
-    logs.push(chalk.greenBright(`[NP]`))
+    logs.push(chalk.greenBright(`[API]`))
     logs.push(renderTime())
     logs.push(level)
     if (scope) {

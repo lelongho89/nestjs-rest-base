@@ -11,8 +11,8 @@ export class SessionService {
     @InjectModel(Session) private readonly sessionModel: MongooseModel<Session>,
   ) { }
 
-  public async findOne(filters: FilterQuery<Session>): Promise<MongooseDoc<Session>> {
-    return this.sessionModel.findOne({ ...filters }).exec().then(result => result || Promise.reject('Session not found'));
+  public async findOne(filters: FilterQuery<Session>): Promise<MongooseDoc<Session> | null> {
+    return this.sessionModel.findOne({ ...filters }).exec();
   }
 
   public async findMany(filters: FilterQuery<Session>): Promise<Session[]> {
@@ -31,7 +31,7 @@ export class SessionService {
     user?: Pick<User, 'id'>;
     excludeId?: Session['id'];
   }): Promise<void> {
-    await this.sessionModel.find({
+    await this.sessionModel.deleteOne({
       ...criteria,
       id: criteria.id ? criteria.id : excludeId ? { $ne: excludeId } : undefined
     });

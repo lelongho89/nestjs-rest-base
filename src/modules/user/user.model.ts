@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 import { AutoIncrementID } from '@typegoose/auto-increment'
 import { prop, plugin, modelOptions, Severity } from '@typegoose/typegoose'
 import { IsString, IsDefined, IsIn, IsInt, IsEmail, IsOptional } from 'class-validator'
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { generalAutoIncrementIDConfig } from '@app/constants/increment.constant'
 import { getProviderByTypegooseClass } from '@app/transformers/model.transformer'
 import { mongoosePaginate } from '@app/utils/paginate'
@@ -80,12 +80,14 @@ export class User {
   @prop({ required: false, type: FileEntity })
   photo?: FileEntity | null;
 
+  @Transform(({ value }) => RoleEnum[value])
   @prop({ required: false })
   role?: RoleEnum | null;
 
   @IsIn(USER_STATES)
   @IsInt()
   @IsDefined()
+  @Transform(({ value }) => StatusEnum[value])
   @prop({ enum: StatusEnum, default: StatusEnum.Active, index: true })
   status: StatusEnum;
 
