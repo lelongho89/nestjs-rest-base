@@ -47,13 +47,13 @@ export class DBBackupService {
     try {
       const result = await this.doBackup()
       const json = { ...result, size: (result.size / 1024).toFixed(2) + 'kb' }
-      this.mailService.dbBackup('Database backup succeed', {
+      await this.mailService.dbBackup('Database backup succeed', {
         to: this.configService.getOrThrow('app.adminEmail', { infer: true }),
         data: { content: JSON.stringify(json, null, 2), isCode: true }
       });
       return result
     } catch (error) {
-      this.mailService.dbBackup('Database backup failed!', {
+      await this.mailService.dbBackup('Database backup failed!', {
         to: this.configService.getOrThrow('app.adminEmail', { infer: true }),
         data: { content: String(error) }
       });

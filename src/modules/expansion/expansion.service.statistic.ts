@@ -61,7 +61,7 @@ export class StatisticService {
       created_at: { $gte: oneDayAgo, $lt: now }
     })
 
-    this.mailService.dailyStatistics({
+    await this.mailService.dailyStatistics({
       to: this.configService.getOrThrow('app.adminEmail', { infer: true }),
       data: { todayViews, todayNewComments }
     });

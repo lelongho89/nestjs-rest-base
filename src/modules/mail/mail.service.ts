@@ -159,6 +159,25 @@ export class MailService {
     });
   }
 
+  public async newFeedback(mailData: MailData<{ feedback: any }>): Promise<void> {
+    // TODO: move to template.
+    const { data: { feedback } } = mailData;
+    const subject = `You have a new feedback`;
+    const texts = [
+      `${subject} on ${feedback.tid}.`,
+      `Author: ${feedback.user_name || 'Anonymous user'}`,
+      `Emotion: ${feedback.emotion_emoji} ${feedback.emotion_text} (${feedback.emotion})`,
+      `Feedback: ${feedback.content}`
+    ]
+
+    this.mailerService.sendMailAs(this.configService.getOrThrow('app.name', { infer: true }), {
+      to: mailData.to,
+      subject,
+      text: texts.join('\n'),
+      html: texts.map((text) => `<p>${text}</p>`).join('\n')
+    })
+  }
+
   private async getMailContent({
     templatePath,
     context
