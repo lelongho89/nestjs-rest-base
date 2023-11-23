@@ -80,14 +80,12 @@ export class User {
   @prop({ required: false, type: FileEntity })
   photo?: FileEntity | null;
 
-  @Transform(({ value }) => RoleEnum[value])
   @prop({ required: false })
   role?: RoleEnum | null;
 
   @IsIn(USER_STATES)
   @IsInt()
   @IsDefined()
-  @Transform(({ value }) => StatusEnum[value])
   @prop({ enum: StatusEnum, default: StatusEnum.Active, index: true })
   status: StatusEnum;
 

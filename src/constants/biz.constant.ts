@@ -47,13 +47,13 @@ export enum CommentState {
 }
 
 export enum StatusEnum {
-  Active = 1,
-  Inactive = 2,
+  Active = 'active',
+  Inactive = 'inactive',
 }
 
 export enum RoleEnum {
-  Admin = 1,
-  User = 2,
+  Admin = 'admin',
+  User = 'user',
 }
 
 export const GUESTBOOK_POST_ID = 0

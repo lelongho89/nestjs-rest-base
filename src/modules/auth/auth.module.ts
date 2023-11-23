@@ -11,7 +11,7 @@ import { MailModule } from '@app/modules/mail/mail.module';
 import { SessionModule } from '@app/modules/session/session.module';
 import { FileModule } from '@app/modules/file/file.module';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@app/config/config.type';
 
 @Module({
