@@ -13,17 +13,17 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { MongooseID, MongooseDoc, MongooseModel } from '@app/interfaces/mongoose.interface';
+import { MongooseDoc } from '@app/interfaces/mongoose.interface';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
 import { AuthResetPasswordDto } from './dto/auth-reset-password.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { LoginResponseType } from './types/login-response.type';
 import { User } from '@app/modules/user/user.model';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 
 @ApiTags('Auth')
 @Controller({
@@ -91,7 +91,7 @@ export class AuthController {
     groups: ['me'],
   })
   @Post('refresh')
-  @UseGuards(AuthGuard('jwt-refresh'))
+  @UseGuards(JwtRefreshAuthGuard)
   @HttpCode(HttpStatus.OK)
   public refresh(@Request() request): Promise<Omit<LoginResponseType, 'user'>> {
     return this.service.refreshToken({

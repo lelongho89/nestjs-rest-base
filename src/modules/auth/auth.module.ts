@@ -11,8 +11,6 @@ import { MailModule } from '@app/modules/mail/mail.module';
 import { SessionModule } from '@app/modules/session/session.module';
 import { FileModule } from '@app/modules/file/file.module';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
-import { ConfigService } from '@nestjs/config';
-import { AllConfigType } from '@app/config/config.type';
 
 @Module({
   imports: [
@@ -22,13 +20,7 @@ import { AllConfigType } from '@app/config/config.type';
     PassportModule,
     MailModule,
     FileModule,
-    JwtModule.registerAsync({
-      useFactory: (configService: ConfigService<AllConfigType>) => ({
-        secretOrPrivateKey: configService.getOrThrow('auth.secret', { infer: true }),
-        signOptions: { expiresIn: configService.getOrThrow('auth.expires', { infer: true }) },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtModule.register({})
   ],
   controllers: [AuthController],
   providers: [

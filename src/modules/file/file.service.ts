@@ -29,15 +29,12 @@ export class FileService {
     }
 
     const path = {
-      local: `/${this.configService.get('app.apiPrefix', { infer: true })}/v1/${file.path
-        }`,
+      local: `/${this.configService.get('app.apiPrefix', { infer: true })}/v1/${file.path.replace(/\\/g, "/")}`,
       s3: (file as Express.MulterS3.File).location,
     };
 
     return this.fileModel.create({
-      path: path[
-        this.configService.getOrThrow('file.driver', { infer: true })
-      ],
+      path: path[this.configService.getOrThrow('file.driver', { infer: true })],
     });
   }
 
