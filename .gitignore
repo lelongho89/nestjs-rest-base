@@ -12,6 +12,9 @@ ecosystem.config.js
 /dbbackup/*
 !/dbbackup/.gitkeep
 
+# Local storage
+/files/*
+
 # documentation
 /documentation
 
