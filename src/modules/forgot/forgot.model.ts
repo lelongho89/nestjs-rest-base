@@ -3,14 +3,13 @@
  * @module module/forgot/model
 */
 
-import { AutoIncrementID } from '@typegoose/auto-increment';
-import { prop, plugin, modelOptions } from '@typegoose/typegoose';
+import { Types } from 'mongoose';
+import { prop, modelOptions } from '@typegoose/typegoose';
 import { IsString } from 'class-validator';
-import { generalAutoIncrementIDConfig } from '@app/constants/increment.constant';
 import { getProviderByTypegooseClass } from '@app/transformers/model.transformer';
 import { User } from '@app/modules/user/user.model';
+import { BaseModel } from '@app/models/base.model';
 
-@plugin(AutoIncrementID, generalAutoIncrementIDConfig)
 @modelOptions({
   schemaOptions: {
     versionKey: false,
@@ -19,22 +18,13 @@ import { User } from '@app/modules/user/user.model';
     }
   }
 })
-export class Forgot {
-  @prop({ unique: true })
-  id: number;
-
+export class Forgot extends BaseModel {
   @IsString()
   @prop({ index: true })
   hash: string;
 
-  @prop()
-  user: User;
-
-  @prop()
-  created_at: Date;
-
-  @prop()
-  deleted_at: Date;
+  @prop({ ref: () => User })
+  user_id: Types.ObjectId;
 }
 
 export const ForgotProvider = getProviderByTypegooseClass(Forgot);

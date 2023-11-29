@@ -15,14 +15,13 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '@app/decorators/roles.decorator';
 import { RoleEnum } from '@app/constants/biz.constant';
-import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@app/guards/roles.guard';
 import { ExposePipe } from '@app/pipes/expose.pipe'
 import { Responser } from '@app/decorators/responser.decorator'
 import { QueryParams, QueryParamsResult } from '@app/decorators/queryparams.decorator'
 import { PaginateResult, PaginateQuery, PaginateOptions } from '@app/utils/paginate'
 import { User } from './user.model';
-import { UserPaginateQueryDTO } from './user.dto';
+import { UserPaginateQueryDTO, CreateUserDto, UpdateUserDto } from './user.dto';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '@app/modules/auth/guards/jwt-auth.guard';
 
@@ -42,8 +41,8 @@ export class UserController {
   })
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() user: User): Promise<User> {
-    return this.userService.create(user);
+  create(@Body() createProfileDto: CreateUserDto): Promise<User> {
+    return this.userService.create(createProfileDto);
   }
 
   @SerializeOptions({
@@ -67,7 +66,7 @@ export class UserController {
     }
 
     // paginate
-    return this.userService.paginator(paginateQuery, paginateOptions)
+    return this.userService.findAll(paginateQuery, paginateOptions)
 
   }
 
@@ -77,7 +76,7 @@ export class UserController {
   @Get(':id')
   @Responser.handle({ message: 'Get user detail', error: HttpStatus.NOT_FOUND })
   getUser(@QueryParams() { params }: QueryParamsResult): Promise<User> {
-    return this.userService.getById(params.id).then((user) => {
+    return this.userService.findOne(params.id).then((user) => {
       return user ? user : Promise.reject('User not found');
     });
   }
@@ -87,8 +86,8 @@ export class UserController {
   })
   @Put(':id')
   @Responser.handle('Update user')
-  putUser(@QueryParams() { params }: QueryParamsResult, @Body() user: User): Promise<User> {
-    return this.userService.update(params.id, user);
+  putUser(@QueryParams() { params }: QueryParamsResult, @Body() updateProfileDto: UpdateUserDto): Promise<User> {
+    return this.userService.update(params.id, updateProfileDto);
   }
 
   @SerializeOptions({

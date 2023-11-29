@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@app/config/config.type';
 import { InjectModel } from '@app/transformers/model.transformer';
-import { MongooseModel, MongooseDoc, MongooseID } from '@app/interfaces/mongoose.interface';
+import { MongooseModel, MongooseDoc } from '@app/interfaces/mongoose.interface';
 import { FileEntity } from './file.model';
 
 
@@ -38,7 +38,7 @@ export class FileService {
     });
   }
 
-  async getById(id: MongooseID | number): Promise<MongooseDoc<FileEntity>> {
+  async getById(id: string): Promise<MongooseDoc<FileEntity>> {
     return this.fileModel.findById(id).exec().then(result => result || Promise.reject('File not found'));
   }
 }

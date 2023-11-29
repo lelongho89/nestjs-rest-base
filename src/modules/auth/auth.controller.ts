@@ -24,6 +24,7 @@ import { LoginResponseType } from './types/login-response.type';
 import { User } from '@app/modules/user/user.model';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
+import { LoggedInUser } from '@app/decorators/user.decorator';
 
 @ApiTags('Auth')
 @Controller({
@@ -82,8 +83,8 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  public me(@Request() request): Promise<MongooseDoc<User>> {
-    return this.service.me(request.user);
+  public me(@LoggedInUser() user): Promise<MongooseDoc<User>> {
+    return this.service.me(user);
   }
 
   @ApiBearerAuth()
@@ -93,20 +94,16 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(JwtRefreshAuthGuard)
   @HttpCode(HttpStatus.OK)
-  public refresh(@Request() request): Promise<Omit<LoginResponseType, 'user'>> {
-    return this.service.refreshToken({
-      sessionId: request.user.sessionId,
-    });
+  public refresh(@LoggedInUser() user): Promise<Omit<LoginResponseType, 'user'>> {
+    return this.service.refreshToken(user);
   }
 
   @ApiBearerAuth()
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  public async logout(@Request() request): Promise<void> {
-    await this.service.logout({
-      sessionId: request.user.sessionId,
-    });
+  public async logout(@LoggedInUser('id') id): Promise<void> {
+    await this.service.logout({ id });
   }
 
   @ApiBearerAuth()
@@ -117,17 +114,17 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   public update(
-    @Request() request,
+    @LoggedInUser() user,
     @Body() userDto: AuthUpdateDto,
   ): Promise<MongooseDoc<User>> {
-    return this.service.update(request.user, userDto);
+    return this.service.update(user, userDto);
   }
 
   @ApiBearerAuth()
   @Delete('me')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  public async delete(@Request() request): Promise<void> {
-    return this.service.delete(request.user);
+  public async delete(@LoggedInUser('id') id): Promise<void> {
+    return this.service.delete(id);
   }
 }

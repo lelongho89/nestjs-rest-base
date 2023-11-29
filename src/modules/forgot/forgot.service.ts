@@ -1,6 +1,6 @@
 import { FilterQuery } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { MongooseID, MongooseDoc, MongooseModel } from '@app/interfaces/mongoose.interface';
+import { MongooseDoc, MongooseModel } from '@app/interfaces/mongoose.interface';
 import { InjectModel } from '@app/transformers/model.transformer';
 import { Forgot } from './forgot.model';
 
@@ -14,7 +14,7 @@ export class ForgotService {
     return this.forgotModel.findOne({ ...filters, deleted_at: null }).exec().then((result) => result || Promise.reject(`Forgot not found`));
   }
 
-  async findMany(filters: FilterQuery<Forgot>): Promise<Forgot[]> {
+  async findAll(filters: FilterQuery<Forgot>): Promise<Forgot[]> {
     return this.forgotModel.find({ ...filters, deleted_at: null }).exec().then((result) => result || []);
   }
 
@@ -22,11 +22,11 @@ export class ForgotService {
     return this.forgotModel.create(forgot);
   }
 
-  async delete(forgotID: MongooseID): Promise<boolean> {
-    const forgot = await this.forgotModel.findById(forgotID);
+  async delete(id: string): Promise<boolean> {
+    const forgot = await this.forgotModel.findById(id);
     if (!forgot) {
       return false;
     }
-    return !!(await this.forgotModel.findByIdAndUpdate(forgotID, { deleted_at: new Date() }).exec());
+    return !!(await this.forgotModel.findByIdAndUpdate(id, { deleted_at: new Date() }).exec());
   }
 }

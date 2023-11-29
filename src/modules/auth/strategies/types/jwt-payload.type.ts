@@ -1,8 +1,7 @@
-import { Session } from '@app/modules/session/session.model';
-import { User } from '../../../user/user.model';
-
-export type JwtPayloadType = Pick<User, 'id' | 'role'> & {
-  sessionId: Session['id'];
+export type JwtPayloadType = {
+  id: string;
+  email: string;
+  role: string;
   iat: number;
   exp: number;
 };

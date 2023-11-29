@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, MinLength, Validate } from 'class-validator';
+import { IsNotEmpty, IsOptional, MinLength } from 'class-validator';
 import { FileEntity } from '../../file/file.model';
 
 export class AuthUpdateDto {
@@ -10,12 +10,12 @@ export class AuthUpdateDto {
   @ApiProperty({ example: 'John' })
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
-  firstName?: string;
+  first_name?: string;
 
   @ApiProperty({ example: 'Doe' })
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
-  lastName?: string;
+  last_name?: string;
 
   @ApiProperty()
   @IsOptional()
@@ -26,5 +26,5 @@ export class AuthUpdateDto {
   @ApiProperty()
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
-  oldPassword: string;
+  old_password: string;
 }

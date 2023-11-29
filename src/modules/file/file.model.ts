@@ -1,10 +1,8 @@
-import { AutoIncrementID } from '@typegoose/auto-increment';
-import { prop, plugin, modelOptions } from '@typegoose/typegoose';
+import { prop, modelOptions } from '@typegoose/typegoose';
 import { getProviderByTypegooseClass } from '@app/transformers/model.transformer';
 import { Exclude } from 'class-transformer';
-import { generalAutoIncrementIDConfig } from '@app/constants/increment.constant';
+import { BaseModel } from '@app/models/base.model';
 
-@plugin(AutoIncrementID, generalAutoIncrementIDConfig)
 @modelOptions({
   schemaOptions: {
     collection: 'files',
@@ -15,16 +13,9 @@ import { generalAutoIncrementIDConfig } from '@app/constants/increment.constant'
     }
   }
 })
-export class FileEntity {
-  @prop({ unique: true })
-  id: number;
-
+export class FileEntity extends BaseModel {
   @prop()
   path: string;
-
-  @Exclude()
-  @prop({ default: Date.now, immutable: true })
-  created_at?: Date
 
   @Exclude()
   @prop({ default: Date.now })

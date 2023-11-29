@@ -1,7 +1,5 @@
-import { Session } from '@app/modules/session/session.model';
-
 export type JwtRefreshPayloadType = {
-  sessionId: Session['id'];
+  id: string;
   iat: number;
   exp: number;
 };

@@ -10,18 +10,16 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { plainToClass } from 'class-transformer';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
-import { MongooseDoc, MongooseModel } from '@app/interfaces/mongoose.interface';
+import { MongooseDoc } from '@app/interfaces/mongoose.interface';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@app/config/config.type';
 import { RoleEnum, StatusEnum } from '@app/constants/biz.constant';
 import { UserService } from '@app/modules/user/user.service';
 import { ForgotService } from '@app/modules/forgot/forgot.service';
-import { SessionService } from '@app/modules/session/session.service';
 import { MailService } from '@app/modules/mail/mail.service';
 import { FileService } from '@app/modules/file/file.service';
 import { User } from '@app/modules/user/user.model';
 import { Forgot } from '@app/modules/forgot/forgot.model';
-import { Session } from '@app/modules/session/session.model';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
 import { AuthProvidersEnum } from './auth-providers.enum';
@@ -32,18 +30,18 @@ import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.ty
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
 @Injectable()
 export class AuthService {
+  private SALT_ROUND = 10;
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
     private forgotService: ForgotService,
-    private sessionService: SessionService,
     private mailService: MailService,
     private fileService: FileService,
     private configService: ConfigService<AllConfigType>,
   ) { }
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseType> {
-    const user = await this.userService.findOne({
+    const user = await this.userService.findOneByCondition({
       email: loginDto.email,
     });
 
@@ -80,15 +78,13 @@ export class AuthService {
       );
     }
 
-    const session = await this.sessionService.create({
-      user,
-    });
-
     const { token, refresh_token, token_expires } = await this.getTokensData({
       id: user.id,
+      email: user.email,
       role: user.role,
-      sessionId: session.id,
     });
+
+    await this.storeRefreshToken(user.id, refresh_token);
 
     return {
       token,
@@ -108,13 +104,13 @@ export class AuthService {
     const socialEmail = socialData.email?.toLowerCase();
 
     if (socialEmail) {
-      userByEmail = await this.userService.findOne({
+      userByEmail = await this.userService.findOneByCondition({
         email: socialEmail,
       });
     }
 
     if (socialData.id) {
-      user = await this.userService.findOne({
+      user = await this.userService.findOneByCondition({
         social_id: socialData.id,
         provider: authProvider,
       });
@@ -124,11 +120,11 @@ export class AuthService {
       if (socialEmail && !userByEmail) {
         user.email = socialEmail;
       }
-      await this.userService.update(user._id, user);
+      await this.userService.update(user._id.toString(), { email: socialEmail, first_name: socialData.firstName, last_name: socialData.lastName });
     } else if (userByEmail) {
       user = userByEmail;
     } else {
-      user = await this.userService.create(plainToClass(User, {
+      user = await this.userService.create({
         email: socialEmail ?? null,
         first_name: socialData.firstName ?? null,
         last_name: socialData.lastName ?? null,
@@ -136,9 +132,9 @@ export class AuthService {
         provider: authProvider,
         role: RoleEnum.User,
         status: StatusEnum.Active,
-      }));
+      });
 
-      user = await this.userService.findOne({
+      user = await this.userService.findOneByCondition({
         id: user.id,
       });
     }
@@ -155,19 +151,17 @@ export class AuthService {
       );
     }
 
-    const session = await this.sessionService.create({
-      user,
-    });
-
     const {
       token,
       refresh_token,
       token_expires,
     } = await this.getTokensData({
       id: user.id,
+      email: user.email,
       role: user.role,
-      sessionId: session.id,
     });
+
+    await this.storeRefreshToken(user._id.toString(), refresh_token);
 
     return {
       token,
@@ -179,7 +173,7 @@ export class AuthService {
 
   async register(dto: AuthRegisterLoginDto): Promise<void> {
 
-    const user = await this.userService.findOne({ email: dto.email });
+    const user = await this.userService.findOneByCondition({ email: dto.email });
     if (user) {
       throw 'emailAlreadyExists'
     }
@@ -189,14 +183,14 @@ export class AuthService {
       .update(randomStringGenerator())
       .digest('hex');
 
-    await this.userService.create(plainToClass(User, {
+    await this.userService.create({
       ...dto,
       email: dto.email,
-      password: await this.getHashPassword(dto.password),
+      password: await this.getPasswordHash(dto.password),
       role: RoleEnum.User,
       status: StatusEnum.Inactive,
       hash
-    }));
+    });
 
     await this.mailService.userSignUp({
       to: dto.email,
@@ -207,7 +201,7 @@ export class AuthService {
   }
 
   async confirmEmail(hash: string): Promise<void> {
-    const user = await this.userService.findOne({
+    const user = await this.userService.findOneByCondition({
       hash,
     });
 
@@ -221,11 +215,11 @@ export class AuthService {
       );
     }
 
-    await this.userService.update(user._id, { hash: null, status: StatusEnum.Active });
+    await this.userService.update(user.id, { hash: null, status: StatusEnum.Active });
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const user = await this.userService.findOne({ email });
+    const user = await this.userService.findOneByCondition({ email });
     if (!user) {
       throw new HttpException(
         {
@@ -257,11 +251,7 @@ export class AuthService {
   }
 
   async resetPassword(hash: string, password: string): Promise<void> {
-    const forgot = await this.forgotService.findOne({
-      where: {
-        hash,
-      },
-    });
+    const forgot = await this.forgotService.findOne({ hash });
 
     if (!forgot) {
       throw new HttpException(
@@ -275,7 +265,7 @@ export class AuthService {
       );
     }
 
-    const user = await this.userService.findOne({ id: forgot.user.id });
+    const user = await this.userService.findOne(forgot.user_id.toString());
 
     if (!user) {
       throw new HttpException(
@@ -289,28 +279,21 @@ export class AuthService {
       );
     }
 
-    await this.sessionService.delete({
-      user: {
-        id: user.id,
-      },
-    });
-    await this.userService.update(user._id, { password: await this.getHashPassword(password) });
-    await this.forgotService.delete(forgot._id);
+    await this.userService.update(user._id.toString(), { password: await this.getPasswordHash(password) });
+    await this.userService.removeRefreshToken(user._id.toString());
+    await this.forgotService.delete(forgot._id.toString());
   }
 
   async me(userJwtPayload: JwtPayloadType): Promise<MongooseDoc<User>> {
-    return this.userService.getById(userJwtPayload.id);
+    return this.userService.findOne(userJwtPayload.id);
   }
 
-  async update(
-    userJwtPayload: JwtPayloadType,
-    userDto: AuthUpdateDto,
-  ): Promise<MongooseDoc<User>> {
+  async update(userJwtPayload: JwtPayloadType, userDto: AuthUpdateDto): Promise<MongooseDoc<User>> {
 
-    const currentUser = await this.userService.getById(userJwtPayload.id);
+    const currentUser = await this.userService.findOne(userJwtPayload.id);
 
     if (userDto.password) {
-      if (userDto.oldPassword) {
+      if (userDto.old_password) {
 
         if (!currentUser) {
           throw new HttpException(
@@ -325,7 +308,7 @@ export class AuthService {
         }
 
         const isValidOldPassword = await bcrypt.compare(
-          userDto.oldPassword,
+          userDto.old_password,
           currentUser.password,
         );
 
@@ -339,16 +322,7 @@ export class AuthService {
             },
             HttpStatus.UNPROCESSABLE_ENTITY,
           );
-        } else {
-          await this.sessionService.delete({
-            user: {
-              id: currentUser.id,
-            },
-            excludeId: userJwtPayload.sessionId,
-          });
         }
-
-
       } else {
         throw new HttpException(
           {
@@ -362,7 +336,7 @@ export class AuthService {
       }
     }
 
-    if (userDto.photo) {
+    if (userDto.photo && userDto.photo.id) {
       const photo = await this.fileService.getById(userDto.photo.id);
 
       if (!photo) {
@@ -370,25 +344,18 @@ export class AuthService {
       }
     }
 
-    await this.userService.update(currentUser._id, userDto);
-
-    return this.userService.getById(currentUser._id);
+    return await this.userService.update(currentUser._id.toString(), userDto);
   }
 
-  async refreshToken(
-    data: Pick<JwtRefreshPayloadType, 'sessionId'>,
-  ): Promise<Omit<LoginResponseType, 'user'>> {
-    const session = await this.sessionService.findOne({ id: data.sessionId });
-
-    if (!session) {
-      throw new UnauthorizedException();
-    }
+  async refreshToken(user: User): Promise<Omit<LoginResponseType, 'user'>> {
 
     const { token, refresh_token, token_expires } = await this.getTokensData({
-      id: session.user.id,
-      role: session.user.role,
-      sessionId: session.id,
+      id: user.id,
+      email: user.email,
+      role: user.role,
     });
+
+    await this.storeRefreshToken(user._id.toString(), refresh_token);
 
     return {
       token,
@@ -397,18 +364,40 @@ export class AuthService {
     };
   }
 
-  async delete(user: User): Promise<void> {
-    await this.userService.softDelete(user.id);
+  async delete(data: Pick<JwtPayloadType, 'id'>) {
+    await this.userService.softDelete(data.id);
   }
 
-  async logout(data: Pick<JwtRefreshPayloadType, 'sessionId'>) {
-    return this.sessionService.delete({ id: data.sessionId });
+  async logout(data: Pick<JwtRefreshPayloadType, 'id'>) {
+    return this.userService.removeRefreshToken(data.id);
+  }
+
+  async getUserIfRefreshTokenMatched(
+    user_id: string,
+    refresh_token: string,
+  ): Promise<User> {
+    try {
+      const user = await this.userService.findOne(user_id);
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      const isRefreshTokenMatching = await bcrypt.compare(refresh_token, user.refresh_token);
+      if (isRefreshTokenMatching) {
+        return user;
+      } else {
+        throw new UnauthorizedException();
+      }
+
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
   }
 
   private async getTokensData(data: {
     id: User['id'];
+    email: User['email'];
     role: User['role'];
-    sessionId: Session['id'];
   }) {
     const tokenExpiresIn = this.configService.getOrThrow('auth.expires', {
       infer: true,
@@ -420,8 +409,8 @@ export class AuthService {
       await this.jwtService.signAsync(
         {
           id: data.id,
+          email: data.email,
           role: data.role,
-          sessionId: data.sessionId,
         },
         {
           secret: this.configService.getOrThrow('auth.secret', { infer: true }),
@@ -430,7 +419,7 @@ export class AuthService {
       ),
       await this.jwtService.signAsync(
         {
-          sessionId: data.sessionId,
+          id: data.id,
         },
         {
           secret: this.configService.getOrThrow('auth.refreshSecret', {
@@ -450,8 +439,16 @@ export class AuthService {
     };
   }
 
-  private async getHashPassword(password: string) {
-    const salt = await bcrypt.genSalt();
-    return await bcrypt.hash(password, salt);
+  private async getPasswordHash(password: string) {
+    return await bcrypt.hash(password, this.SALT_ROUND);
+  }
+
+  private async storeRefreshToken(user_id: string, token: string): Promise<void> {
+    try {
+      const hashed_token = await bcrypt.hash(token, this.SALT_ROUND);
+      await this.userService.setCurrentRefreshToken(user_id, hashed_token);
+    } catch (error) {
+      throw error;
+    }
   }
 }

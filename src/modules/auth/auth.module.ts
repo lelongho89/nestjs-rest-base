@@ -8,7 +8,6 @@ import { AnonymousStrategy } from './strategies/anonymous.strategy';
 import { UserModule } from '@app/modules/user/user.module';
 import { ForgotModule } from '@app/modules/forgot/forgot.module';
 import { MailModule } from '@app/modules/mail/mail.module';
-import { SessionModule } from '@app/modules/session/session.module';
 import { FileModule } from '@app/modules/file/file.module';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
@@ -16,7 +15,6 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
   imports: [
     UserModule,
     ForgotModule,
-    SessionModule,
     PassportModule,
     MailModule,
     FileModule,
