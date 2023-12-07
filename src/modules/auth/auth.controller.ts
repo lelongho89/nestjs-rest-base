@@ -4,12 +4,11 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Request,
   Post,
   UseGuards,
   Patch,
   Delete,
-  SerializeOptions,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -25,7 +24,9 @@ import { User } from '@app/modules/user/user.model';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { LoggedInUser } from '@app/decorators/user.decorator';
+import MongooseClassSerializerInterceptor from '@app/interceptors/mongoose-class-serializer.interceptor';
 
+@UseInterceptors(MongooseClassSerializerInterceptor(User))
 @ApiTags('Auth')
 @Controller({
   path: 'auth',
@@ -34,9 +35,7 @@ import { LoggedInUser } from '@app/decorators/user.decorator';
 export class AuthController {
   constructor(private readonly service: AuthService) { }
 
-  @SerializeOptions({
-    groups: ['me'],
-  })
+  @ApiBearerAuth()
   @Post('email/login')
   @HttpCode(HttpStatus.OK)
   public login(
@@ -45,6 +44,7 @@ export class AuthController {
     return this.service.validateLogin(loginDto);
   }
 
+  @ApiBearerAuth()
   @Post('email/register')
   @HttpCode(HttpStatus.NO_CONTENT)
   async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
@@ -59,6 +59,7 @@ export class AuthController {
     return this.service.confirmEmail(confirmEmailDto.hash);
   }
 
+  @ApiBearerAuth()
   @Post('forgot/password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(
@@ -67,6 +68,7 @@ export class AuthController {
     return this.service.forgotPassword(forgotPasswordDto.email);
   }
 
+  @ApiBearerAuth()
   @Post('reset/password')
   @HttpCode(HttpStatus.NO_CONTENT)
   resetPassword(@Body() resetPasswordDto: AuthResetPasswordDto): Promise<void> {
@@ -77,9 +79,6 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @SerializeOptions({
-    groups: ['me'],
-  })
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -88,9 +87,6 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @SerializeOptions({
-    groups: ['me'],
-  })
   @Post('refresh')
   @UseGuards(JwtRefreshAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -107,9 +103,6 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @SerializeOptions({
-    groups: ['me'],
-  })
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)

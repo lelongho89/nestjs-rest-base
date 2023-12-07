@@ -1,13 +1,11 @@
 import { Request } from 'express';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ExtractJwt, Strategy, VerifiedCallback } from 'passport-jwt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { JwtRefreshPayloadType } from './types/jwt-refresh-payload.type';
 import { AllConfigType } from '@app/config/config.type';
 import { AuthService } from '../auth.service';
-import { User } from '@app/modules/user/user.model';
-
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -23,18 +21,18 @@ export class JwtRefreshStrategy extends PassportStrategy(
     });
   }
 
-  public async validate(req: Request, payload: JwtRefreshPayloadType): Promise<User> {
+  public async validate(req: Request, payload: JwtRefreshPayloadType, done: VerifiedCallback) {
     if (!payload.id) {
-      throw new UnauthorizedException();
+      return done(new UnauthorizedException(), false);
     }
 
     const refresh_token = req.headers.authorization?.split('Bearer ')[1] || '';
     const user = await this.authService.getUserIfRefreshTokenMatched(payload.id, refresh_token);
 
     if (!user) {
-      throw new UnauthorizedException();
+      return done(new UnauthorizedException(), false);
     }
 
-    return user;
+    return done(null, user);
   }
 }

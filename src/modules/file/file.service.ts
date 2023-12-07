@@ -5,7 +5,6 @@ import { InjectModel } from '@app/transformers/model.transformer';
 import { MongooseModel, MongooseDoc } from '@app/interfaces/mongoose.interface';
 import { FileEntity } from './file.model';
 
-
 @Injectable()
 export class FileService {
   constructor(
@@ -36,9 +35,5 @@ export class FileService {
     return this.fileModel.create({
       path: path[this.configService.getOrThrow('file.driver', { infer: true })],
     });
-  }
-
-  async getById(id: string): Promise<MongooseDoc<FileEntity>> {
-    return this.fileModel.findById(id).exec().then(result => result || Promise.reject('File not found'));
   }
 }

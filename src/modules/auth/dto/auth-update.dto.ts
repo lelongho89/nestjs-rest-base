@@ -1,11 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, MinLength } from 'class-validator';
-import { FileEntity } from '../../file/file.model';
 
 export class AuthUpdateDto {
-  @ApiProperty({ type: () => FileEntity })
+  @ApiProperty({ example: 'http://status.example.com/image.jpg' })
   @IsOptional()
-  photo?: FileEntity;
+  photo?: string;
 
   @ApiProperty({ example: 'John' })
   @IsOptional()

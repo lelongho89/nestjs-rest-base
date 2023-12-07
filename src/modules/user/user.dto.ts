@@ -8,7 +8,6 @@ import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IntersectionType } from '@nestjs/mapped-types'
 import { KeywordQueryDTO } from '@app/models/query.model'
 import { PaginateOptionWithHotSortDTO } from '@app/models/paginate.model'
-import { FileEntity } from '@app/modules/file/file.model';
 import { lowerCase } from '@app/transformers/value.transformer';
 import { RoleEnum, StatusEnum } from '@app/constants/biz.constant';
 
@@ -37,9 +36,9 @@ export class CreateUserDto {
   @IsNotEmpty()
   last_name: string | null;
 
-  @ApiProperty({ type: () => FileEntity })
+  @ApiProperty({ example: 'http://status.example.com/image.jpg' })
   @IsOptional()
-  photo?: FileEntity | null;
+  photo?: string | null;
 
   @ApiProperty({ enum: () => RoleEnum })
   role?: RoleEnum | null;
@@ -74,9 +73,9 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   last_name?: string | null;
 
-  @ApiProperty({ type: () => FileEntity })
+  @ApiProperty({ example: 'http://status.example.com/image.jpg' })
   @IsOptional()
-  photo?: FileEntity | null;
+  photo?: string | null;
 
   @ApiProperty({ enum: () => RoleEnum })
   @IsOptional()

@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
-import type { User } from "@app/modules/user/user.model";
+import { User } from "@app/modules/user/user.model";
 
 /*
 The `LoggedInUser` decorator is used to get the user object from the request object.

@@ -11,8 +11,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Responser } from '@app/decorators/responser.decorator'
 import { FileService } from './file.service';
+import { FileEntity } from './file.model';
+import MongooseClassSerializerInterceptor from '@app/interceptors/mongoose-class-serializer.interceptor';
 
+@UseInterceptors(MongooseClassSerializerInterceptor(FileEntity))
 @ApiTags('Files')
 @Controller({
   path: 'files',
@@ -36,6 +40,7 @@ export class FileController {
       },
     },
   })
+  @Responser.handle('Upload file')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File | Express.MulterS3.File,

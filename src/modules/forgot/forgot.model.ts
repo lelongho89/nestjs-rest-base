@@ -13,6 +13,8 @@ import { BaseModel } from '@app/models/base.model';
 @modelOptions({
   schemaOptions: {
     versionKey: false,
+    toJSON: { getters: true },
+    toObject: { getters: true },
     timestamps: {
       createdAt: 'created_at'
     }

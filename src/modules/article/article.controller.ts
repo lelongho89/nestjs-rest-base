@@ -30,7 +30,7 @@ export class ArticleController {
     private readonly tagService: TagService,
     private readonly categoryService: CategoryService,
     private readonly articleService: ArticleService
-  ) {}
+  ) { }
 
   @Get()
   @UseGuards(AdminMaybeGuard)

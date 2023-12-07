@@ -10,7 +10,8 @@ import {
   Query,
   HttpStatus,
   HttpCode,
-  SerializeOptions,
+  UseInterceptors,
+  Request
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '@app/decorators/roles.decorator';
@@ -24,7 +25,9 @@ import { User } from './user.model';
 import { UserPaginateQueryDTO, CreateUserDto, UpdateUserDto } from './user.dto';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '@app/modules/auth/guards/jwt-auth.guard';
+import MongooseClassSerializerInterceptor from '@app/interceptors/mongoose-class-serializer.interceptor';
 
+@UseInterceptors(MongooseClassSerializerInterceptor(User))
 @ApiBearerAuth()
 @Roles(RoleEnum.Admin)
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,27 +39,22 @@ import { JwtAuthGuard } from '@app/modules/auth/guards/jwt-auth.guard';
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
-  @SerializeOptions({
-    groups: ['admin'],
-  })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createProfileDto: CreateUserDto): Promise<User> {
     return this.userService.create(createProfileDto);
   }
 
-  @SerializeOptions({
-    groups: ['admin'],
-  })
   @Get()
   @Responser.paginate()
-  @Responser.handle('Get users')
+  @Responser.handle({ message: 'Get users' })
   async findAll(
+    @Request() req,
     @Query(ExposePipe) query: UserPaginateQueryDTO
   ): Promise<PaginateResult<User>> {
     const { page, per_page, sort, ...filters } = query
     const paginateQuery: PaginateQuery<User> = {}
-    const paginateOptions: PaginateOptions = { page, perPage: per_page }
+    const paginateOptions: PaginateOptions = { page, perPage: per_page, sort }
 
     // search
     if (filters.keyword) {
@@ -67,12 +65,8 @@ export class UserController {
 
     // paginate
     return this.userService.findAll(paginateQuery, paginateOptions)
-
   }
 
-  @SerializeOptions({
-    groups: ['admin'],
-  })
   @Get(':id')
   @Responser.handle({ message: 'Get user detail', error: HttpStatus.NOT_FOUND })
   getUser(@QueryParams() { params }: QueryParamsResult): Promise<User> {
@@ -81,21 +75,15 @@ export class UserController {
     });
   }
 
-  @SerializeOptions({
-    groups: ['admin'],
-  })
   @Put(':id')
   @Responser.handle('Update user')
   putUser(@QueryParams() { params }: QueryParamsResult, @Body() updateProfileDto: UpdateUserDto): Promise<User> {
     return this.userService.update(params.id, updateProfileDto);
   }
 
-  @SerializeOptions({
-    groups: ['admin'],
-  })
   @Delete(':id')
   @Responser.handle('Delete user')
-  delUser(@QueryParams() { params }: QueryParamsResult): Promise<Boolean> {
+  delUser(@QueryParams() { params }: QueryParamsResult): Promise<boolean> {
     return this.userService.softDelete(params.id);
   }
 }

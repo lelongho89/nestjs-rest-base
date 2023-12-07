@@ -5,13 +5,12 @@
 
 import { prop, plugin, modelOptions, Severity } from '@typegoose/typegoose'
 import { IsString, IsDefined, IsIn, IsInt, IsEmail, IsOptional } from 'class-validator'
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { getProviderByTypegooseClass } from '@app/transformers/model.transformer'
 import { mongoosePaginate } from '@app/utils/paginate'
 import { StatusEnum } from '@app/constants/biz.constant'
 import { AuthProvidersEnum } from '@app/modules/auth/auth-providers.enum';
 import { RoleEnum } from '@app/constants/biz.constant';
-import { FileEntity } from '@app/modules/file/file.model';
 import { BaseModel } from '@app/models/base.model';
 
 export const USER_STATES = [StatusEnum.Active, StatusEnum.Inactive] as const
@@ -23,6 +22,7 @@ export const USER_STATES = [StatusEnum.Active, StatusEnum.Inactive] as const
   },
   schemaOptions: {
     versionKey: false,
+    toJSON: { getters: true },
     toObject: { getters: true },
     timestamps: {
       createdAt: 'created_at',
@@ -42,11 +42,9 @@ export class User extends BaseModel {
   @prop({ required: false })
   password: string | null
 
-  @Expose({ groups: ['me', 'admin'] })
   @prop({ required: true, default: AuthProvidersEnum.email })
   provider: string;
 
-  @Expose({ groups: ['me', 'admin'] })
   @IsString()
   @prop({ index: true })
   social_id: string | null;
@@ -59,8 +57,8 @@ export class User extends BaseModel {
   @prop({ index: true })
   last_name: string | null;
 
-  @prop({ type: () => FileEntity })
-  photo?: FileEntity;
+  @prop()
+  photo?: string | null;
 
   @prop()
   role?: RoleEnum | null;
@@ -76,11 +74,12 @@ export class User extends BaseModel {
   @prop({ index: true })
   hash: string | null;
 
-  @Exclude({ toPlainOnly: true })
+  @Exclude()
   @IsString()
   @prop()
   refresh_token?: string | null;
 
+  @Exclude({ toPlainOnly: true })
   @prop({ default: Date.now })
   updated_at?: Date
 }

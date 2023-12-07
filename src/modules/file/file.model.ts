@@ -7,6 +7,8 @@ import { BaseModel } from '@app/models/base.model';
   schemaOptions: {
     collection: 'files',
     versionKey: false,
+    toJSON: { getters: true },
+    toObject: { getters: true },
     timestamps: {
       createdAt: 'created_at',
       updatedAt: 'updated_at'
@@ -17,7 +19,7 @@ export class FileEntity extends BaseModel {
   @prop()
   path: string;
 
-  @Exclude()
+  @Exclude({ toPlainOnly: true })
   @prop({ default: Date.now })
   updated_at?: Date
 }

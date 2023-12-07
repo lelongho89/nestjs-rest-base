@@ -28,6 +28,7 @@ import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { LoginResponseType } from './types/login-response.type';
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
+
 @Injectable()
 export class AuthService {
   private SALT_ROUND = 10;
@@ -133,10 +134,6 @@ export class AuthService {
         role: RoleEnum.User,
         status: StatusEnum.Active,
       });
-
-      user = await this.userService.findOneByCondition({
-        id: user.id,
-      });
     }
 
     if (!user) {
@@ -156,7 +153,7 @@ export class AuthService {
       refresh_token,
       token_expires,
     } = await this.getTokensData({
-      id: user.id,
+      id: user._id,
       email: user.email,
       role: user.role,
     });
@@ -294,7 +291,6 @@ export class AuthService {
 
     if (userDto.password) {
       if (userDto.old_password) {
-
         if (!currentUser) {
           throw new HttpException(
             {
@@ -323,6 +319,9 @@ export class AuthService {
             HttpStatus.UNPROCESSABLE_ENTITY,
           );
         }
+
+        // All passed, hash the new password.
+        userDto.password = await this.getPasswordHash(userDto.password);
       } else {
         throw new HttpException(
           {
@@ -336,23 +335,14 @@ export class AuthService {
       }
     }
 
-    if (userDto.photo && userDto.photo.id) {
-      const photo = await this.fileService.getById(userDto.photo.id);
-
-      if (!photo) {
-        throw 'imageNotExists';
-      }
-    }
-
     return await this.userService.update(currentUser._id.toString(), userDto);
   }
 
   async refreshToken(user: User): Promise<Omit<LoginResponseType, 'user'>> {
-
     const { token, refresh_token, token_expires } = await this.getTokensData({
-      id: user.id,
+      id: user._id,
       email: user.email,
-      role: user.role,
+      role: user.role
     });
 
     await this.storeRefreshToken(user._id.toString(), refresh_token);
@@ -384,7 +374,7 @@ export class AuthService {
 
       const isRefreshTokenMatching = await bcrypt.compare(refresh_token, user.refresh_token);
       if (isRefreshTokenMatching) {
-        return user;
+        return user.toObject();
       } else {
         throw new UnauthorizedException();
       }
@@ -395,7 +385,7 @@ export class AuthService {
   }
 
   private async getTokensData(data: {
-    id: User['id'];
+    id: User['_id'];
     email: User['email'];
     role: User['role'];
   }) {

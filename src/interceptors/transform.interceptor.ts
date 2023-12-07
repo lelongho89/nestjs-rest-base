@@ -35,18 +35,19 @@ export class TransformInterceptor<T> implements NestInterceptor<T, T | HttpRespo
             url: request.url,
             method: request.method,
             routes: request.params,
-            payload: request.$validatedPayload || {}
+            payload: request.$validatedPayload || {},
+            timestamp: new Date().getTime(),
           },
           result: paginate
             ? {
-                data: data.documents,
-                pagination: {
-                  total: data.total,
-                  current_page: data.page,
-                  per_page: data.perPage,
-                  total_page: data.totalPage
-                }
+              data: data.documents,
+              pagination: {
+                total: data.total,
+                current_page: data.page,
+                per_page: data.perPage,
+                total_page: data.totalPage
               }
+            }
             : data
         }
       })
