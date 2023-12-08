@@ -23,6 +23,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     const user = await this.userService.findOne(payload.id);
     // TODO: map user's permissions and role's permissions.
-    return user;
+    return user?.toObject();
   }
 }

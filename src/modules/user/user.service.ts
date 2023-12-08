@@ -28,11 +28,11 @@ export class UserService {
     return this.userModel.paginate(query, options);
   }
 
-  public async findOne(id: string): Promise<MongooseDoc<User>> {
+  public async findOne(id: string) {
     return this.userModel
       .findById(id)
       .exec()
-      .then((result) => (result?.deleted_at ? null : result) || Promise.reject(`User '${id}' not found`));
+      .then((result) => (result?.deleted_at ? null : result));
   }
 
   public async findOneByCondition(filters: FilterQuery<User>) {

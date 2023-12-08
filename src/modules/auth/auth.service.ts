@@ -206,7 +206,7 @@ export class AuthService {
       throw new HttpException(
         {
           status: HttpStatus.NOT_FOUND,
-          error: `notFound`,
+          error: `userNotFound`,
         },
         HttpStatus.NOT_FOUND,
       );
@@ -251,43 +251,32 @@ export class AuthService {
     const forgot = await this.forgotService.findOne({ hash });
 
     if (!forgot) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            hash: `notFound`,
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw 'forgotNotFound';
     }
 
     const user = await this.userService.findOne(forgot.user_id.toString());
 
     if (!user) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: 'notFound',
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw 'userNotFound';
     }
 
-    await this.userService.update(user._id.toString(), { password: await this.getPasswordHash(password) });
-    await this.userService.removeRefreshToken(user._id.toString());
-    await this.forgotService.delete(forgot._id.toString());
+    await this.userService.update(user.id, { password: await this.getPasswordHash(password) });
+    await this.userService.removeRefreshToken(user.id);
+    await this.forgotService.delete(forgot.id);
   }
 
-  async me(userJwtPayload: JwtPayloadType): Promise<MongooseDoc<User>> {
-    return this.userService.findOne(userJwtPayload.id);
+  async me(userJwtPayload: User): Promise<MongooseDoc<User>> {
+    return this.userService.findOne(userJwtPayload.id).then((user) => {
+      return user ? user : Promise.reject('Profile not found');
+    });
   }
 
-  async update(userJwtPayload: JwtPayloadType, userDto: AuthUpdateDto): Promise<MongooseDoc<User>> {
+  async update(userJwtPayload: User, userDto: AuthUpdateDto): Promise<MongooseDoc<User>> {
 
     const currentUser = await this.userService.findOne(userJwtPayload.id);
+    if (!currentUser) {
+      throw 'userNotFound';
+    }
 
     if (userDto.password) {
       if (userDto.old_password) {
@@ -335,7 +324,7 @@ export class AuthService {
       }
     }
 
-    return await this.userService.update(currentUser._id.toString(), userDto);
+    return await this.userService.update(currentUser.id, userDto);
   }
 
   async refreshToken(user: User): Promise<Omit<LoginResponseType, 'user'>> {
@@ -365,7 +354,7 @@ export class AuthService {
   async getUserIfRefreshTokenMatched(
     user_id: string,
     refresh_token: string,
-  ): Promise<User> {
+  ) {
     try {
       const user = await this.userService.findOne(user_id);
       if (!user) {
@@ -374,7 +363,7 @@ export class AuthService {
 
       const isRefreshTokenMatching = await bcrypt.compare(refresh_token, user.refresh_token);
       if (isRefreshTokenMatching) {
-        return user.toObject();
+        return user;
       } else {
         throw new UnauthorizedException();
       }

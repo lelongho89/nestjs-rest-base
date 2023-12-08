@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Body,
   Controller,
@@ -19,11 +20,13 @@ import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
 import { AuthResetPasswordDto } from './dto/auth-reset-password.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
+import { AuthRefreshTokenDto } from './dto/auth-refresh-token.dto';
 import { LoginResponseType } from './types/login-response.type';
 import { User } from '@app/modules/user/user.model';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { LoggedInUser } from '@app/decorators/user.decorator';
+
 import MongooseClassSerializerInterceptor from '@app/interceptors/mongoose-class-serializer.interceptor';
 
 @UseInterceptors(MongooseClassSerializerInterceptor(User))
@@ -90,7 +93,7 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(JwtRefreshAuthGuard)
   @HttpCode(HttpStatus.OK)
-  public refresh(@LoggedInUser() user): Promise<Omit<LoginResponseType, 'user'>> {
+  public refresh(@LoggedInUser() user, @Body() input: AuthRefreshTokenDto): Promise<Omit<LoginResponseType, 'user'>> {
     return this.service.refreshToken(user);
   }
 
