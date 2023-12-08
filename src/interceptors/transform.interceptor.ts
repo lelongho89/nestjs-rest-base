@@ -3,10 +3,12 @@
  * @module interceptor/transform
 */
 
-import { Request } from 'express'
-import { Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
-import { Injectable, NestInterceptor, CallHandler, ExecutionContext } from '@nestjs/common'
+import { Request } from 'express';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Document } from 'mongoose';
+import { plainToClass, ClassConstructor } from 'class-transformer';
+import { Injectable, NestInterceptor, CallHandler, ExecutionContext, PlainLiteralObject } from '@nestjs/common'
 import { HttpResponseSuccess, ResponseStatus } from '@app/interfaces/response.interface'
 import { getResponserOptions } from '@app/decorators/responser.decorator'
 import * as TEXT from '@app/constants/text.constant'
@@ -18,9 +20,35 @@ import * as TEXT from '@app/constants/text.constant'
 export class TransformInterceptor<T> implements NestInterceptor<T, T | HttpResponseSuccess<T>> {
   intercept(context: ExecutionContext, next: CallHandler<T>): Observable<T | HttpResponseSuccess<T>> {
     const target = context.getHandler()
-    const { successMessage, transform, paginate } = getResponserOptions(target)
+    const { successMessage, transform, paginate, serialization } = getResponserOptions(target)
     if (!transform) {
       return next.handle()
+    }
+
+    const changePlainObjectToClass = (document: PlainLiteralObject, serialization?: ClassConstructor<any>) => {
+      if (!(document instanceof Document) || !serialization) {
+        return document;
+      }
+
+      return plainToClass(serialization,
+        document
+          ? JSON.parse(JSON.stringify(document ?? {}))
+          : undefined, {
+        excludePrefixes: ['_']
+      });
+    }
+
+    const transformResponse = (
+      response:
+        | PlainLiteralObject
+        | PlainLiteralObject[],
+      serialization?: ClassConstructor<unknown>,
+    ) => {
+      if (Array.isArray(response)) {
+        return response.map(item => changePlainObjectToClass(item, serialization));
+      }
+
+      return changePlainObjectToClass(response, serialization);
     }
 
     const request = context.switchToHttp().getRequest<Request>()
@@ -40,7 +68,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, T | HttpRespo
           },
           result: paginate
             ? {
-              data: data.documents,
+              data: transformResponse(data.documents, serialization),
               pagination: {
                 total: data.total,
                 current_page: data.page,
@@ -48,7 +76,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, T | HttpRespo
                 total_page: data.totalPage
               }
             }
-            : data
+            : transformResponse(data, serialization)
         }
       })
     )

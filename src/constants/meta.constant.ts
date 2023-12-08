@@ -14,6 +14,7 @@ export const HTTP_SUCCESS_MESSAGE = '__appHttpSuccessMessage__'
 
 export const HTTP_RESPONSE_TRANSFORM = '__appHttpResponseTransform__'
 export const HTTP_RESPONSE_TRANSFORM_TO_PAGINATE = '__appHttpResponseTransformToPaginate__'
+export const HTTP_RESPONSE_SERIALIZATION = '__appHttpResponseSerialization__'
 
 // cache
 export const CACHE_KEY_METADATA = '__appCacheKey__'

@@ -4,6 +4,7 @@
 */
 
 import lodash from 'lodash'
+import { ClassConstructor } from 'class-transformer';
 import { SetMetadata, HttpStatus } from '@nestjs/common'
 import { ResponseMessage } from '@app/interfaces/response.interface'
 import { UNDEFINED } from '@app/constants/value.constant'
@@ -13,7 +14,8 @@ import * as TEXT from '@app/constants/text.constant'
 
 export interface ResponserOptions extends Omit<DecoratorCreatorOption, 'usePaginate'> {
   transform?: boolean
-  paginate?: boolean
+  paginate?: boolean,
+  serialization?: ClassConstructor<any>,
 }
 
 export const getResponserOptions = (target: any): ResponserOptions => {
@@ -23,7 +25,8 @@ export const getResponserOptions = (target: any): ResponserOptions => {
     errorMessage: reflector.get(META.HTTP_ERROR_MESSAGE, target),
     successMessage: reflector.get(META.HTTP_SUCCESS_MESSAGE, target),
     transform: reflector.get(META.HTTP_RESPONSE_TRANSFORM, target),
-    paginate: reflector.get(META.HTTP_RESPONSE_TRANSFORM_TO_PAGINATE, target)
+    paginate: reflector.get(META.HTTP_RESPONSE_TRANSFORM_TO_PAGINATE, target),
+    serialization: reflector.get<ClassConstructor<any>>(META.HTTP_RESPONSE_SERIALIZATION, target)
   }
 }
 
@@ -32,20 +35,22 @@ interface DecoratorCreatorOption {
   successCode?: HttpStatus
   errorMessage?: ResponseMessage
   successMessage?: ResponseMessage
-  usePaginate?: boolean
+  usePaginate?: boolean,
+  serialization?: ClassConstructor<any>,
 }
 
 interface HandleOption {
   error?: HttpStatus
   success?: HttpStatus
   message: ResponseMessage
-  usePaginate?: boolean
+  usePaginate?: boolean,
+  serialization?: ClassConstructor<any>,
 }
 
 type HandleOptionConfig = ResponseMessage | HandleOption
 
 const createDecorator = (options: DecoratorCreatorOption): MethodDecorator => {
-  const { errorMessage, successMessage, errorCode, successCode, usePaginate } = options
+  const { errorMessage, successMessage, errorCode, successCode, usePaginate, serialization } = options
   return (_, __, descriptor: PropertyDescriptor) => {
     SetMetadata(META.HTTP_RESPONSE_TRANSFORM, true)(descriptor.value)
     if (errorCode) {
@@ -62,6 +67,9 @@ const createDecorator = (options: DecoratorCreatorOption): MethodDecorator => {
     }
     if (usePaginate) {
       SetMetadata(META.HTTP_RESPONSE_TRANSFORM_TO_PAGINATE, true)(descriptor.value)
+    }
+    if (serialization) {
+      SetMetadata(META.HTTP_RESPONSE_SERIALIZATION, serialization)(descriptor.value)
     }
     return descriptor
   }
@@ -98,12 +106,14 @@ export function handle(...args) {
   const errorCode = isOption(option) ? option.error : UNDEFINED
   const successCode = isOption(option) ? option.success : UNDEFINED
   const usePaginate = isOption(option) ? option.usePaginate : false
+  const serialization = isOption(option) ? option.serialization : UNDEFINED
   return createDecorator({
     errorCode,
     successCode,
     errorMessage,
     successMessage,
-    usePaginate
+    usePaginate,
+    serialization,
   })
 }
 
@@ -114,4 +124,11 @@ export const paginate = (): MethodDecorator => {
   return createDecorator({ usePaginate: true })
 }
 
-export const Responser = { error, success, handle, paginate }
+/**
+ * @exports serialize
+ * @example ```@HttpProcessor.paginate()```*/
+export const serialize = (serialization: ClassConstructor<any>): MethodDecorator => {
+  return createDecorator({ serialization });
+}
+
+export const Responser = { error, success, handle, paginate, serialize }

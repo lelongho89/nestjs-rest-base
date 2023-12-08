@@ -36,7 +36,7 @@ export class User extends BaseModel {
   @prop({ required: false, unique: true })
   email: string | null
 
-  @Exclude({ toPlainOnly: true })
+  @Exclude()
   @IsOptional()
   @IsString()
   @prop({ required: false })
@@ -69,7 +69,7 @@ export class User extends BaseModel {
   @prop({ enum: StatusEnum, default: StatusEnum.Active, index: true })
   status: StatusEnum;
 
-  @Exclude({ toPlainOnly: true })
+  @Exclude()
   @IsString()
   @prop({ index: true })
   hash: string | null;
@@ -79,7 +79,7 @@ export class User extends BaseModel {
   @prop()
   refresh_token?: string | null;
 
-  @Exclude({ toPlainOnly: true })
+  @Exclude()
   @prop({ default: Date.now })
   updated_at?: Date
 }

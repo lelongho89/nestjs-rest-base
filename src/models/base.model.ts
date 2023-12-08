@@ -9,11 +9,11 @@ export class BaseModel {
   @Transform((value) => value.obj?._id?.toString(), { toClassOnly: true })
   id: string;
 
-  @Exclude({ toPlainOnly: true })
+  @Exclude()
   @prop({ default: Date.now, immutable: true })
   created_at: Date;
 
-  @Exclude({ toPlainOnly: true })
+  @Exclude()
   @prop({ default: null })
   deleted_at?: Date;
 }

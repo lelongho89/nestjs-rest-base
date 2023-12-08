@@ -17,7 +17,6 @@ import { RoleEnum, StatusEnum } from '@app/constants/biz.constant';
 import { UserService } from '@app/modules/user/user.service';
 import { ForgotService } from '@app/modules/forgot/forgot.service';
 import { MailService } from '@app/modules/mail/mail.service';
-import { FileService } from '@app/modules/file/file.service';
 import { User } from '@app/modules/user/user.model';
 import { Forgot } from '@app/modules/forgot/forgot.model';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
@@ -37,7 +36,6 @@ export class AuthService {
     private userService: UserService,
     private forgotService: ForgotService,
     private mailService: MailService,
-    private fileService: FileService,
     private configService: ConfigService<AllConfigType>,
   ) { }
 
@@ -51,15 +49,7 @@ export class AuthService {
     }
 
     if (user.provider !== AuthProvidersEnum.email) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: `needLoginViaProvider:${user.provider}`,
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw `needLoginViaProvider:${user.provider}`;
     }
 
     const isValidPassword = await bcrypt.compare(
@@ -68,15 +58,7 @@ export class AuthService {
     );
 
     if (!isValidPassword) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            password: 'incorrectPassword',
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw 'incorrectPassword';
     }
 
     const { token, refresh_token, token_expires } = await this.getTokensData({
@@ -121,7 +103,7 @@ export class AuthService {
       if (socialEmail && !userByEmail) {
         user.email = socialEmail;
       }
-      await this.userService.update(user._id.toString(), { email: socialEmail, first_name: socialData.firstName, last_name: socialData.lastName });
+      await this.userService.update(user.id, { email: socialEmail, first_name: socialData.firstName, last_name: socialData.lastName });
     } else if (userByEmail) {
       user = userByEmail;
     } else {
@@ -136,17 +118,7 @@ export class AuthService {
       });
     }
 
-    if (!user) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            user: 'userNotFound',
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    if (!user) throw 'userNotFound';
 
     const {
       token,
@@ -158,7 +130,7 @@ export class AuthService {
       role: user.role,
     });
 
-    await this.storeRefreshToken(user._id.toString(), refresh_token);
+    await this.storeRefreshToken(user.id, refresh_token);
 
     return {
       token,
@@ -169,11 +141,8 @@ export class AuthService {
   }
 
   async register(dto: AuthRegisterLoginDto): Promise<void> {
-
     const user = await this.userService.findOneByCondition({ email: dto.email });
-    if (user) {
-      throw 'emailAlreadyExists'
-    }
+    if (user) throw 'emailAlreadyExists';
 
     const hash = crypto
       .createHash('sha256')
@@ -201,33 +170,14 @@ export class AuthService {
     const user = await this.userService.findOneByCondition({
       hash,
     });
-
-    if (!user) {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          error: `userNotFound`,
-        },
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    if (!user) throw 'userNotFound';
 
     await this.userService.update(user.id, { hash: null, status: StatusEnum.Active });
   }
 
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userService.findOneByCondition({ email });
-    if (!user) {
-      throw new HttpException(
-        {
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            email: 'emailNotExists',
-          },
-        },
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    if (!user) throw 'emailNotExists';
 
     const hash = crypto
       .createHash('sha256')
@@ -249,78 +199,45 @@ export class AuthService {
 
   async resetPassword(hash: string, password: string): Promise<void> {
     const forgot = await this.forgotService.findOne({ hash });
-
-    if (!forgot) {
-      throw 'forgotNotFound';
-    }
+    if (!forgot) throw 'forgotNotFound';
 
     const user = await this.userService.findOne(forgot.user_id.toString());
-
-    if (!user) {
-      throw 'userNotFound';
-    }
+    if (!user) throw 'userNotFound';
 
     await this.userService.update(user.id, { password: await this.getPasswordHash(password) });
     await this.userService.removeRefreshToken(user.id);
     await this.forgotService.delete(forgot.id);
   }
 
-  async me(userJwtPayload: User): Promise<MongooseDoc<User>> {
-    return this.userService.findOne(userJwtPayload.id).then((user) => {
+  async me(data: Pick<User, 'id'>): Promise<MongooseDoc<User>> {
+    return this.userService.findOne(data.id).then((user) => {
       return user ? user : Promise.reject('Profile not found');
     });
   }
 
-  async update(userJwtPayload: User, userDto: AuthUpdateDto): Promise<MongooseDoc<User>> {
-
-    const currentUser = await this.userService.findOne(userJwtPayload.id);
+  async update(data: Pick<User, 'id'>, userDto: AuthUpdateDto): Promise<MongooseDoc<User>> {
+    const currentUser = await this.userService.findOne(data.id);
     if (!currentUser) {
       throw 'userNotFound';
     }
 
     if (userDto.password) {
       if (userDto.old_password) {
-        if (!currentUser) {
-          throw new HttpException(
-            {
-              status: HttpStatus.UNPROCESSABLE_ENTITY,
-              errors: {
-                user: 'userNotFound',
-              },
-            },
-            HttpStatus.UNPROCESSABLE_ENTITY,
-          );
-        }
-
+        // Check if old password is correct.
         const isValidOldPassword = await bcrypt.compare(
           userDto.old_password,
           currentUser.password,
         );
 
         if (!isValidOldPassword) {
-          throw new HttpException(
-            {
-              status: HttpStatus.UNPROCESSABLE_ENTITY,
-              errors: {
-                oldPassword: 'incorrectOldPassword',
-              },
-            },
-            HttpStatus.UNPROCESSABLE_ENTITY,
-          );
+          throw 'incorrectOldPassword';
         }
 
-        // All passed, hash the new password.
+        // All good, let's hash the new password.
         userDto.password = await this.getPasswordHash(userDto.password);
+
       } else {
-        throw new HttpException(
-          {
-            status: HttpStatus.UNPROCESSABLE_ENTITY,
-            errors: {
-              oldPassword: 'missingOldPassword',
-            },
-          },
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
+        throw 'missingOldPassword';
       }
     }
 

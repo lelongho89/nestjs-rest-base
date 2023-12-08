@@ -10,7 +10,6 @@ import {
   Query,
   HttpStatus,
   HttpCode,
-  UseInterceptors,
   Request
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -25,9 +24,7 @@ import { User } from './user.model';
 import { UserPaginateQueryDTO, CreateUserDto, UpdateUserDto } from './user.dto';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '@app/modules/auth/guards/jwt-auth.guard';
-import MongooseClassSerializerInterceptor from '@app/interceptors/mongoose-class-serializer.interceptor';
 
-@UseInterceptors(MongooseClassSerializerInterceptor(User))
 @ApiBearerAuth()
 @Roles(RoleEnum.Admin)
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -46,8 +43,7 @@ export class UserController {
   }
 
   @Get()
-  @Responser.paginate()
-  @Responser.handle({ message: 'Get users' })
+  @Responser.handle({ message: 'Get users', usePaginate: true, serialization: User })
   async findAll(
     @Request() req,
     @Query(ExposePipe) query: UserPaginateQueryDTO
