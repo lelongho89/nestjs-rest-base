@@ -19,7 +19,7 @@ export class FileEntity extends BaseModel {
   @prop()
   path: string;
 
-  @Exclude({ toPlainOnly: true })
+  @Exclude()
   @prop({ default: Date.now })
   updated_at?: Date
 }

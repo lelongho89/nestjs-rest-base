@@ -4,7 +4,6 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  SerializeOptions,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from '@app/modules/auth/auth.service';
@@ -23,9 +22,6 @@ export class AuthAppleController {
     private readonly authAppleService: AuthAppleService,
   ) { }
 
-  @SerializeOptions({
-    groups: ['me'],
-  })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: AuthAppleLoginDto): Promise<LoginResponseType> {

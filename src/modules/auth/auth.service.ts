@@ -2,8 +2,6 @@ import ms from 'ms';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import {
-  HttpException,
-  HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
