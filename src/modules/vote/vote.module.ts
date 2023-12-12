@@ -17,4 +17,4 @@ import { VoteController } from './vote.controller'
   providers: [VoteProvider, VoteService],
   controllers: [VoteController]
 })
-export class VoteModule {}
+export class VoteModule { }

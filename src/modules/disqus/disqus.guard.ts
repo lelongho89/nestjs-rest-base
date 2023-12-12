@@ -1,5 +1,14 @@
+/**
+ * @file Disqus guard
+ * @module module/disqus/guard
+ * As we cannot inject ConfigService into a decorator (disqus.token.ts),
+ * we have to use a guard to decode token from cookie, and then inject it into request.
+ * after that, we can create a decorator to get token from request.
+*/
+
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { DisqusTokenService, TOKEN_COOKIE_KEY } from './disqus.service.token';
+import { DisqusTokenService } from './disqus.service.token';
+import { TOKEN_COOKIE_KEY, TOKEN_REQUEST_KEY } from './disqus.token';
 
 @Injectable()
 export class DisqusTokenGuard implements CanActivate {
@@ -11,8 +20,7 @@ export class DisqusTokenGuard implements CanActivate {
     if (token) {
       const decodedToken = this.disqusTokenService.decodeToken(token);
       if (decodedToken) {
-        // Attach the decoded token to the request object
-        request.__disqusToken__ = decodedToken;
+        request[TOKEN_REQUEST_KEY] = decodedToken;
         return true;
       }
     }

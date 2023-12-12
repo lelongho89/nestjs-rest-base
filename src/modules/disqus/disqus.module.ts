@@ -18,6 +18,6 @@ import { JwtModule } from '@nestjs/jwt'
   imports: [HttpModule, OptionModule, ArticleModule, CommentModule, JwtModule.register({})],
   controllers: [DisqusController],
   providers: [DisqusPublicService, DisqusPrivateService, DisqusTokenService],
-  exports: [DisqusPublicService, DisqusPrivateService]
+  exports: [DisqusPublicService, DisqusPrivateService, DisqusTokenService]
 })
 export class DisqusModule { }

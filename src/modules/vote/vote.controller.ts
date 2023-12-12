@@ -5,7 +5,7 @@
 
 import lodash from 'lodash'
 import { UAParser } from 'ua-parser-js'
-import { Controller, Get, Post, Delete, Request, Body, Query, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Delete, Body, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle, minutes, seconds } from '@nestjs/throttler'
 import { ConfigService } from '@nestjs/config'
@@ -22,13 +22,14 @@ import { ArticleService } from '@app/modules/article/article.service'
 import { CommentService } from '@app/modules/comment/comment.service'
 import { Author } from '@app/modules/comment/comment.model'
 import { DisqusPublicService } from '@app/modules/disqus/disqus.service.public'
+import { DisqusTokenGuard } from '@app/modules/disqus/disqus.guard'
 import { AccessToken } from '@app/utils/disqus'
+import { DisqusToken } from '@app/modules/disqus/disqus.token'
 import { GUESTBOOK_POST_ID } from '@app/constants/biz.constant'
 import { getPermalinkByID } from '@app/transformers/urlmap.transformer'
 import { CommentVoteDTO, PostVoteDTO, VotePaginateQueryDTO, VotesDTO } from './vote.dto'
 import { Vote, VoteTarget, VoteAuthorType, voteTypeMap } from './vote.model'
 import { VoteService } from './vote.service'
-import { DisqusTokenGuard } from '@app/modules/disqus/disqus.guard'
 import * as APP_CONFIG from '@app/app.config'
 
 @ApiBearerAuth()
@@ -204,8 +205,8 @@ export class VoteController {
   @Throttle({ default: { ttl: minutes(1), limit: 10 } })
   @Responser.handle('Vote post')
   async votePost(
-    @Request() request,
     @Body() voteBody: PostVoteDTO,
+    @DisqusToken() token: AccessToken | null,
     @QueryParams() { visitor }: QueryParamsResult
   ) {
     // NodePress
@@ -214,7 +215,6 @@ export class VoteController {
         ? await this.optionService.incrementLikes()
         : await this.articleService.incrementLikes(voteBody.post_id)
     // Disqus
-    const token = request.disqusToken as AccessToken | null;
     this.voteDisqusThread(voteBody.post_id, voteBody.vote, token?.access_token).catch(() => { })
     // author
     this.getVoteAuthor({ guestAuthor: voteBody.author, disqusToken: token?.access_token }).then(
@@ -254,15 +254,14 @@ export class VoteController {
   @Throttle({ default: { ttl: seconds(30), limit: 10 } })
   @Responser.handle('Vote comment')
   async voteComment(
-    @Request() request,
     @Body() voteBody: CommentVoteDTO,
+    @DisqusToken() token: AccessToken | null,
     @QueryParams() { visitor }: QueryParamsResult
   ) {
     // NodePress
     const result = await this.commentService.vote(voteBody.comment_id, voteBody.vote > 0)
 
     // Disqus only logged-in user
-    const token = request.disqusToken as AccessToken | null;
     if (token) {
       try {
         const postID = await this.disqusPublicService.getDisqusPostIDByCommentID(voteBody.comment_id)

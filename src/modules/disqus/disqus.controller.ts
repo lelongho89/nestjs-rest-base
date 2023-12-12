@@ -11,7 +11,6 @@ import {
   Body,
   Header,
   UploadedFile,
-  Request,
   Response,
   UseGuards,
   Query,
@@ -31,7 +30,8 @@ import { AccessToken } from '@app/utils/disqus'
 import { DisqusPublicService } from './disqus.service.public'
 import { DisqusPrivateService } from './disqus.service.private'
 import { DisqusTokenGuard } from './disqus.guard'
-import { DisqusTokenService, TOKEN_COOKIE_KEY } from './disqus.service.token';
+import { DisqusTokenService } from './disqus.service.token';
+import { TOKEN_COOKIE_KEY, DisqusToken } from './disqus.token'
 import { CallbackCodeDTO, ThreadPostIdDTO, CommentIdDTO, GeneralDisqusParams } from './disqus.dto'
 
 @ApiBearerAuth()
@@ -84,8 +84,7 @@ export class DisqusController {
   @Header('content-type', 'text/plain')
   @UseGuards(DisqusTokenGuard)
   @Responser.handle('Disqus OAuth logout')
-  oauthLogout(@Request() request, @Response() response) {
-    const token = request.disqusToken as AccessToken | null;
+  oauthLogout(@DisqusToken() token: AccessToken | null, @Response() response) {
     if (token) {
       this.disqusPublicService.deleteUserInfoCache(token.user_id)
     }
@@ -96,8 +95,7 @@ export class DisqusController {
   @Get('user-info')
   @UseGuards(DisqusTokenGuard)
   @Responser.handle('Get Disqus user info')
-  getUserInfo(@Request() request) {
-    const token = request.disqusToken as AccessToken | null;
+  getUserInfo(@DisqusToken() token: AccessToken | null) {
     if (!token) {
       return Promise.reject(`You are not logged in`)
     }
@@ -118,19 +116,17 @@ export class DisqusController {
   @Throttle({ default: { ttl: seconds(30), limit: 6 } })
   @Responser.handle('Create universal comment')
   createComment(
-    @Request() request,
     @QueryParams() { visitor }: QueryParamsResult,
+    @DisqusToken() token: AccessToken | null,
     @Body() comment: CommentBase
   ) {
-    const token = request.disqusToken as AccessToken | null;
     return this.disqusPublicService.createUniversalComment(comment, visitor, token?.access_token)
   }
 
   @Delete('comment')
   @UseGuards(DisqusTokenGuard)
   @Responser.handle('Delete universal comment')
-  deleteComment(@Request() request, @Body() payload: CommentIdDTO) {
-    const token = request.disqusToken as AccessToken | null;
+  deleteComment(@Body() payload: CommentIdDTO, @DisqusToken() token: AccessToken | null) {
     return token
       ? this.disqusPublicService.deleteUniversalComment(payload.comment_id, token.access_token)
       : Promise.reject(`You are not logged in`)

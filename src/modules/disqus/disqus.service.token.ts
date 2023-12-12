@@ -2,9 +2,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@app/config/config.type';
-import { AccessToken } from '@app/utils/disqus'
-
-export const TOKEN_COOKIE_KEY = '_disqus'
+import { AccessToken } from '@app/utils/disqus';
 
 @Injectable()
 export class DisqusTokenService {

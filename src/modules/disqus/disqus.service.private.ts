@@ -18,7 +18,9 @@ import { getPermalinkByID } from '@app/transformers/urlmap.transformer'
 import { Disqus } from '@app/utils/disqus'
 import logger from '@app/utils/logger'
 import { GeneralDisqusParams } from './disqus.dto'
-import { getDisqusXML } from './disqus.xml'
+import { getThreadIdentifierByID } from './disqus.constant'
+import { ThreadState } from './disqus.dto'
+import { XMLItemData } from './disqus.xml'
 import * as DISQUS_CONST from './disqus.constant'
 
 const log = logger.scope('DisqusPrivateService')
@@ -162,7 +164,7 @@ export class DisqusPrivateService {
 
     // 3. make XML data
     const treeList = Array.from(treeMap.values()).filter((item) => Boolean(item.article))
-    return getDisqusXML(treeList, guestbook)
+    return this.getDisqusXML(treeList, guestbook)
   }
 
   // import Disqus data to NodePress
@@ -235,5 +237,59 @@ export class DisqusPrivateService {
 
     log.info('import XML', { done: done.length, fail: fail.length })
     return { done, fail }
+  }
+
+  private getDisqusXML(data: XMLItemData[], guestbook: Array<Comment>) {
+    const getCommentItemXML = (comment: Comment) => {
+      return `
+        <wp:comment>
+          <wp:comment_id>${comment.id}</wp:comment_id>
+          <wp:comment_parent>${comment.pid || ''}</wp:comment_parent>
+          <wp:comment_author>${comment.author.name || ''}</wp:comment_author>
+          <wp:comment_author_email>${comment.author.email || ''}</wp:comment_author_email>
+          <wp:comment_author_url>${comment.author.site || ''}</wp:comment_author_url>
+          <wp:comment_author_IP>${comment.ip || ''}</wp:comment_author_IP>
+          <wp:comment_date_gmt>${dayjs(comment.created_at).format('YYYY-MM-DD HH:mm:ss')}</wp:comment_date_gmt>
+          <wp:comment_content><![CDATA[${comment.content || ''}]]></wp:comment_content>
+          <wp:comment_approved>${comment.state === CommentState.Published ? 1 : 0}</wp:comment_approved>
+        </wp:comment>
+      `
+    }
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0"
+        xmlns:content="http://purl.org/rss/1.0/modules/content/"
+        xmlns:dsq="http://www.disqus.com/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:wp="http://wordpress.org/export/1.0/"
+      >
+        <channel>
+          <item>
+            <title>Guestbook</title>
+            <link>${getPermalinkByID(GUESTBOOK_POST_ID)}</link>
+            <content:encoded><![CDATA[${this.configService.getOrThrow('app.name', { infer: true })}]]></content:encoded>
+            <dsq:thread_identifier>${getThreadIdentifierByID(GUESTBOOK_POST_ID)}</dsq:thread_identifier>
+            <wp:post_date_gmt>2017-01-01 00:00:00</wp:post_date_gmt>
+            <wp:comment_status>open</wp:comment_status>
+            ${guestbook.map(getCommentItemXML).join('\n')}
+          </item>
+          ${data
+        .map(
+          (item) => `
+              <item>
+                <title>${item.article.title}</title>
+                <link>${getPermalinkByID(item.article.id)}</link>
+                <content:encoded><![CDATA[${item.article.description || ''}]]></content:encoded>
+                <dsq:thread_identifier>${getThreadIdentifierByID(item.article.id)}</dsq:thread_identifier>
+                <wp:post_date_gmt>${dayjs(item.article.created_at).format('YYYY-MM-DD HH:mm:ss')}</wp:post_date_gmt>
+                <wp:comment_status>${item.article.disabled_comments ? ThreadState.Closed : ThreadState.Open
+            }</wp:comment_status>
+                ${item.comments.map(getCommentItemXML).join('\n')}
+              </item>
+            `
+        )
+        .join('\n')}
+        </channel>
+      </rss>`
   }
 }
