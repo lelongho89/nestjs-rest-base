@@ -11,6 +11,7 @@ import {
   Body,
   Header,
   UploadedFile,
+  Request,
   Response,
   UseGuards,
   Query,
@@ -29,7 +30,8 @@ import { CommentBase } from '@app/modules/comment/comment.model'
 import { AccessToken } from '@app/utils/disqus'
 import { DisqusPublicService } from './disqus.service.public'
 import { DisqusPrivateService } from './disqus.service.private'
-import { DisqusToken, TOKEN_COOKIE_KEY, encodeToken } from './disqus.token'
+import { DisqusTokenGuard } from './disqus.guard'
+import { DisqusTokenService, TOKEN_COOKIE_KEY } from './disqus.service.token';
 import { CallbackCodeDTO, ThreadPostIdDTO, CommentIdDTO, GeneralDisqusParams } from './disqus.dto'
 
 @ApiBearerAuth()
@@ -39,6 +41,7 @@ export class DisqusController {
   constructor(
     private readonly disqusPublicService: DisqusPublicService,
     private readonly disqusPrivateService: DisqusPrivateService,
+    private readonly DisqusTokenService: DisqusTokenService,
     private readonly configService: ConfigService<AllConfigType>,
   ) { }
 
@@ -69,7 +72,7 @@ export class DisqusController {
       accessToken.expires_in
     )
     // http://expressjs.com/en/5x/api.html#res.cookie
-    response.cookie(TOKEN_COOKIE_KEY, encodeToken(accessToken), {
+    response.cookie(TOKEN_COOKIE_KEY, this.DisqusTokenService.encodeToken(accessToken), {
       maxAge: accessToken.expires_in * 1000,
       httpOnly: true,
       secure: isProdEnv
@@ -79,8 +82,10 @@ export class DisqusController {
 
   @Get('oauth-logout')
   @Header('content-type', 'text/plain')
+  @UseGuards(DisqusTokenGuard)
   @Responser.handle('Disqus OAuth logout')
-  oauthLogout(@DisqusToken() token: AccessToken | null, @Response() response) {
+  oauthLogout(@Request() request, @Response() response) {
+    const token = request.disqusToken as AccessToken | null;
     if (token) {
       this.disqusPublicService.deleteUserInfoCache(token.user_id)
     }
@@ -89,8 +94,10 @@ export class DisqusController {
   }
 
   @Get('user-info')
+  @UseGuards(DisqusTokenGuard)
   @Responser.handle('Get Disqus user info')
-  getUserInfo(@DisqusToken() token: AccessToken | null) {
+  getUserInfo(@Request() request) {
+    const token = request.disqusToken as AccessToken | null;
     if (!token) {
       return Promise.reject(`You are not logged in`)
     }
@@ -107,19 +114,23 @@ export class DisqusController {
   }
 
   @Post('comment')
+  @UseGuards(DisqusTokenGuard)
   @Throttle({ default: { ttl: seconds(30), limit: 6 } })
   @Responser.handle('Create universal comment')
   createComment(
+    @Request() request,
     @QueryParams() { visitor }: QueryParamsResult,
-    @DisqusToken() token: AccessToken | null,
     @Body() comment: CommentBase
   ) {
+    const token = request.disqusToken as AccessToken | null;
     return this.disqusPublicService.createUniversalComment(comment, visitor, token?.access_token)
   }
 
   @Delete('comment')
+  @UseGuards(DisqusTokenGuard)
   @Responser.handle('Delete universal comment')
-  deleteComment(@Body() payload: CommentIdDTO, @DisqusToken() token: AccessToken | null) {
+  deleteComment(@Request() request, @Body() payload: CommentIdDTO) {
+    const token = request.disqusToken as AccessToken | null;
     return token
       ? this.disqusPublicService.deleteUniversalComment(payload.comment_id, token.access_token)
       : Promise.reject(`You are not logged in`)

@@ -19,7 +19,6 @@ import {
 } from 'class-validator'
 import { KeyValueModel } from '@app/models/key-value.model'
 import { getProviderByTypegooseClass } from '@app/transformers/model.transformer'
-import { APP } from '@app/app.config'
 
 export const DEFAULT_OPTION: Option = Object.freeze<Option>({
   title: 'REST API',

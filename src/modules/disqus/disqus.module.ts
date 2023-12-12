@@ -11,11 +11,13 @@ import { CommentModule } from '@app/modules/comment/comment.module'
 import { DisqusController } from './disqus.controller'
 import { DisqusPublicService } from './disqus.service.public'
 import { DisqusPrivateService } from './disqus.service.private'
+import { DisqusTokenService } from './disqus.service.token'
+import { JwtModule } from '@nestjs/jwt'
 
 @Module({
-  imports: [HttpModule, OptionModule, ArticleModule, CommentModule],
+  imports: [HttpModule, OptionModule, ArticleModule, CommentModule, JwtModule.register({})],
   controllers: [DisqusController],
-  providers: [DisqusPublicService, DisqusPrivateService],
+  providers: [DisqusPublicService, DisqusPrivateService, DisqusTokenService],
   exports: [DisqusPublicService, DisqusPrivateService]
 })
-export class DisqusModule {}
+export class DisqusModule { }
