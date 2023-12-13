@@ -3,8 +3,8 @@
   "editor.detectIndentation": false,
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": true
-  },
+    "source.fixAll": "explicit"
+},
 "typescript.tsdk": "node_modules/typescript/lib",
 "[typescript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"

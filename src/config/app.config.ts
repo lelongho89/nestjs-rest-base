@@ -72,10 +72,10 @@ export default registerAs<AppConfig>('app', () => {
     nodeEnv: process.env.NODE_ENV || 'development',
     name: process.env.APP_NAME || 'app',
     workingDirectory: process.env.PWD || process.cwd(),
-    frontendDomain: process.env.FRONTEND_DOMAIN,
-    backendDomain: process.env.BACKEND_DOMAIN ?? 'http://localhost',
+    frontendDomain: process.env.FRONTEND_DOMAIN ?? 'http://localhost:5000',
+    backendDomain: process.env.BACKEND_DOMAIN ?? 'http://localhost:3000',
     allowedOrigins: process.env.ALLOWED_ORIGINS ? JSON.parse(process.env.ALLOWED_ORIGINS) : ['*'],
-    allowedReferer: process.env.ALLOWED_REFERER || 'localhost',
+    allowedReferer: process.env.ALLOWED_REFERER || 'localhost:5000',
     port: process.env.APP_PORT
       ? parseInt(process.env.APP_PORT, 10)
       : process.env.PORT

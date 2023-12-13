@@ -21,16 +21,6 @@ export const APP = {
   STATIC_URL: 'https://static.example.com'
 }
 
-export const DISQUS = {
-  // https://disqus.com/api/applications/<app_id> & Keep permissions: <Read, Write, Manage Forums>
-  adminAccessToken: argv.disqus_admin_access_token || 'Disqus admin access_token',
-  adminUsername: argv.disqus_admin_username || 'Disqus admin username',
-  forum: argv.disqus_forum_shortname || 'Disqus forum shortname',
-  // https://disqus.com/api/applications/
-  publicKey: argv.disqus_public_key || 'Disqus application public_key',
-  secretKey: argv.disqus_secret_key || 'Disqus application secret_key'
-}
-
 export const GOOGLE = {
   jwtServiceAccountCredentials: argv.google_jwt_cred_json ? JSON.parse(argv.google_jwt_cred_json as string) : null
 }
