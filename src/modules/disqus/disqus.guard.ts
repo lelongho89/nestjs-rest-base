@@ -17,13 +17,18 @@ export class DisqusTokenGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const token = request.cookies[TOKEN_COOKIE_KEY];
-    if (token) {
-      const decodedToken = this.disqusTokenService.decodeToken(token);
-      if (decodedToken) {
-        request[TOKEN_REQUEST_KEY] = decodedToken;
-        return true;
-      }
+
+    // Disqus token is optional.
+    if (!token) {
+      return true;
     }
+
+    const decodedToken = this.disqusTokenService.decodeToken(token);
+    if (decodedToken) {
+      request[TOKEN_REQUEST_KEY] = decodedToken;
+      return true;
+    }
+
     return false;
   }
 }
