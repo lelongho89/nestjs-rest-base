@@ -41,21 +41,11 @@ import { DatabaseModule } from '@app/processors/database/database.module'
 import { CacheModule } from '@app/processors/cache/cache.module'
 import { HelperModule } from '@app/processors/helper/helper.module'
 
-// BIZ helper module
-import { ExpansionModule } from '@app/modules/expansion/expansion.module'
-
 // BIZ modules
 import { AuthModule } from '@app/modules/auth/auth.module'
 import { OptionModule } from '@app/modules/option/option.module'
-import { FeedbackModule } from '@app/modules/feedback/feedback.module'
 import { AnnouncementModule } from '@app/modules/announcement/announcement.module'
-import { TagModule } from '@app/modules/tag/tag.module'
-import { CategoryModule } from '@app/modules/category/category.module'
-import { ArticleModule } from '@app/modules/article/article.module'
-import { CommentModule } from '@app/modules/comment/comment.module'
-import { DisqusModule } from '@app/modules/disqus/disqus.module'
-import { ArchiveModule } from '@app/modules/archive/archive.module'
-import { VoteModule } from '@app/modules/vote/vote.module'
+import { UserModule } from '@app/modules/user/user.module';
 
 @Module({
   imports: [
@@ -122,19 +112,11 @@ import { VoteModule } from '@app/modules/vote/vote.module'
     HelperModule,
     DatabaseModule,
     CacheModule,
-    ExpansionModule,
     // BIZs
     AuthModule,
     OptionModule,
-    FeedbackModule,
     AnnouncementModule,
-    TagModule,
-    CategoryModule,
-    ArticleModule,
-    CommentModule,
-    DisqusModule,
-    ArchiveModule,
-    VoteModule
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

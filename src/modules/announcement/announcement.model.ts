@@ -25,9 +25,6 @@ export const ANNOUNCEMENT_STATES = [PublishState.Draft, PublishState.Published] 
   }
 })
 export class Announcement {
-  @prop({ unique: true })
-  id: number
-
   @IsString()
   @IsNotEmpty({ message: 'content?' })
   @prop({ required: true, validate: /\S+/ })

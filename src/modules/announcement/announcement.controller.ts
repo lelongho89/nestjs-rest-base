@@ -6,25 +6,24 @@
 import lodash from 'lodash'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Put, Post, Delete, Body, UseGuards, Query } from '@nestjs/common'
-import { AdminOnlyGuard } from '@app/guards/admin-only.guard'
-import { AdminMaybeGuard } from '@app/guards/admin-maybe.guard'
 import { PermissionPipe } from '@app/pipes/permission.pipe'
 import { ExposePipe } from '@app/pipes/expose.pipe'
 import { Responser } from '@app/decorators/responser.decorator'
 import { QueryParams, QueryParamsResult } from '@app/decorators/queryparams.decorator'
 import { PaginateResult, PaginateQuery } from '@app/utils/paginate'
+import { JwtAuthGuard } from '@app/modules/auth/guards/jwt-auth.guard';
 import { AnnouncementsDTO, AnnouncementPaginateQueryDTO } from './announcement.dto'
 import { AnnouncementService } from './announcement.service'
 import { Announcement } from './announcement.model'
 
 @ApiBearerAuth()
 @ApiTags('Announcement')
+@UseGuards(JwtAuthGuard)
 @Controller('announcement')
 export class AnnouncementController {
-  constructor(private readonly announcementService: AnnouncementService) {}
+  constructor(private readonly announcementService: AnnouncementService) { }
 
   @Get()
-  @UseGuards(AdminMaybeGuard)
   @Responser.paginate()
   @Responser.handle('Get announcements')
   getAnnouncements(
@@ -53,28 +52,24 @@ export class AnnouncementController {
   }
 
   @Post()
-  @UseGuards(AdminOnlyGuard)
   @Responser.handle('Create announcement')
   createAnnouncement(@Body() announcement: Announcement) {
     return this.announcementService.create(announcement)
   }
 
   @Delete()
-  @UseGuards(AdminOnlyGuard)
   @Responser.handle('Delete announcements')
   delAnnouncements(@Body() body: AnnouncementsDTO) {
     return this.announcementService.batchDelete(body.announcement_ids)
   }
 
   @Put(':id')
-  @UseGuards(AdminOnlyGuard)
   @Responser.handle('Update announcement')
   putAnnouncement(@QueryParams() { params }: QueryParamsResult, @Body() announcement: Announcement) {
     return this.announcementService.update(params.id, announcement)
   }
 
   @Delete(':id')
-  @UseGuards(AdminOnlyGuard)
   @Responser.handle('Delete announcement')
   delAnnouncement(@QueryParams() { params }: QueryParamsResult) {
     return this.announcementService.delete(params.id)
